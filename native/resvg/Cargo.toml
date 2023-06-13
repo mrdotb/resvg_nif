@@ -1,0 +1,18 @@
+[package]
+name = "resvg"
+version = "0.1.0"
+# We don't use versioning in the in this crate.
+# Please check the `mix.exs` file at the root of this project for the current version.
+author = ["mrdotb <mrdotb@protonmail.com>"]
+edition = "2021"
+
+[lib]
+name = "resvg"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+rustler = "0.25.0"
+resvg = "0.34.1"
+usvg = "0.34.1"
+tiny-skia = "0.10"
