@@ -32,7 +32,7 @@ resvg_nif-*.tar
 /tmp/
 
 # Generated images in test
-/test/*.png
+/test/support/*.png
 
 # The directory that rust will compile to for testing.
 /native/resvg/target/
