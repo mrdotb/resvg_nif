@@ -1,4 +1,5 @@
 defmodule Resvg.Native do
+  @moduledoc false
   # mix_config = Mix.Project.config()
   # version = mix_config[:version]
   # github_url = mix_config[:package][:links]["GitHub"]
@@ -27,5 +28,5 @@ defmodule Resvg.Native do
   use Rustler, otp_app: :resvg, crate: :resvg
 
   def convert(_mjml, _render_options), do: error()
-  defp error(), do: :erlang.nif_error(:nif_not_loaded)
+  defp error, do: :erlang.nif_error(:nif_not_loaded)
 end
