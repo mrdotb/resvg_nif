@@ -3,7 +3,13 @@ defmodule Resvg do
   Documentation for `ResvgNif`.
   """
 
-  def convert(input, output) do
-    Resvg.Native.convert(input, output)
+  def svg_to_png(svg_path, png_path, opts \\ []) do
+    options = struct(Resvg.Options, opts)
+    Resvg.Native.svg_to_png(svg_path, png_path, options)
+  end
+
+  def list_fonts(opts \\ []) do
+    options = struct(Resvg.Options, opts)
+    Resvg.Native.list_fonts(options)
   end
 end

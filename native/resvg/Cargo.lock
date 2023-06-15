@@ -268,6 +268,7 @@ version = "0.1.0"
 dependencies = [
  "resvg 0.34.1",
  "rustler",
+ "svgtypes",
  "tiny-skia",
  "usvg",
 ]

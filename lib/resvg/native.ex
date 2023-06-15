@@ -27,6 +27,11 @@ defmodule Resvg.Native do
 
   use Rustler, otp_app: :resvg, crate: :resvg
 
-  def convert(_mjml, _render_options), do: error()
+  def svg_to_png(_svg_path, _png_path, _options), do: error()
+  # def svg_string_to_png(_svg_string, _png_path), do: error()
+  # def svg_string_to_png_buffer(_svg_string), do: error()
+
+  def list_fonts(_options), do: error()
+
   defp error, do: :erlang.nif_error(:nif_not_loaded)
 end
