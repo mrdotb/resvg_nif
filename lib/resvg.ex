@@ -3,9 +3,9 @@ defmodule Resvg do
   Documentation for `ResvgNif`.
   """
 
-  def svg_to_png(svg_path, png_path, opts \\ []) do
+  def svg_to_png(in_svg, out_png, opts \\ []) do
     options = struct(Resvg.Options, opts)
-    Resvg.Native.svg_to_png(svg_path, png_path, options)
+    Resvg.Native.svg_to_png(in_svg, out_png, options)
   end
 
   def list_fonts(opts \\ []) do
