@@ -47,6 +47,15 @@ impl FitTo {
     }
 }
 
+macro_rules! try_or_return_elixir_err {
+    ($expression:expr, $env:expr) => {
+        match $expression.map_err(|e| e.to_string()) {
+            Ok(val) => val,
+            Err(err) => return Ok((atoms::error(), err).encode($env)),
+        }
+    };
+}
+
 #[derive(NifStruct)]
 #[module = "Resvg.Options"]
 pub struct Options {
@@ -77,7 +86,7 @@ pub struct Options {
 enum InputFrom {
     Text(String),
     File(path::PathBuf),
-    Empty
+    Empty,
 }
 
 struct ParsedOptions {
@@ -87,8 +96,6 @@ struct ParsedOptions {
     // export_id: Option<String>,
     // export_area_page: bool,
     // export_area_drawing: bool,
-    // perf: bool,
-    // quiet: bool,
     usvg: usvg::Options,
     fit_to: FitTo,
     background: Option<svgtypes::Color>,
@@ -110,49 +117,42 @@ pub fn svg_to_png<'a>(
     options: Options,
 ) -> NifResult<Term<'a>> {
     let input_from = InputFrom::File(path::PathBuf::from(&in_svg));
-    let parsed_options = match parse_options(input_from, options) {
-        Ok(parsed_options) => parsed_options,
-        Err(error_msg) => return Ok((atoms::error(), error_msg).encode(env)),
-    };
 
-    let mut svg_data =
-        match std::fs::read(&in_svg).map_err(|e| format!("Error loading svg file: {}", e)) {
-            Ok(svg_data) => svg_data,
-            Err(error_msg) => return Ok((atoms::error(), error_msg).encode(env)),
-        };
+    let parsed_options = try_or_return_elixir_err!(parse_options(input_from, options), env);
+
+    let mut svg_data = try_or_return_elixir_err!(
+        std::fs::read(&in_svg).map_err(|e| format!("Error loading svg file: {}", e)),
+        env
+    );
 
     if svg_data.starts_with(&[0x1f, 0x8b]) {
-        svg_data = match usvg::decompress_svgz(&svg_data).map_err(|e| e.to_string()) {
-            Ok(svg_data) => svg_data,
-            Err(error_msg) => return Ok((atoms::error(), error_msg).encode(env)),
-        }
+        svg_data = try_or_return_elixir_err!(
+            usvg::decompress_svgz(&svg_data).map_err(|e| e.to_string()),
+            env
+        );
     };
 
-    let svg_string = match std::str::from_utf8(&svg_data)
-        .map_err(|_| "provided data has not an UTF-8 encoding".to_string())
-    {
-        Ok(svg_string) => svg_string,
-        Err(error_msg) => return Ok((atoms::error(), error_msg).encode(env)),
-    };
+    let svg_string = try_or_return_elixir_err!(
+        std::str::from_utf8(&svg_data)
+            .map_err(|_| "provided data has not an UTF-8 encoding".to_string()),
+        env
+    );
 
     let xml_opt = usvg::roxmltree::ParsingOptions {
         allow_dtd: true,
         ..Default::default()
     };
 
-    let xml_tree = match usvg::roxmltree::Document::parse_with_options(svg_string, xml_opt)
-        .map_err(|e| e.to_string())
-    {
-        Ok(xml_tree) => xml_tree,
-        Err(error_msg) => return Ok((atoms::error(), error_msg).encode(env)),
-    };
+    let xml_tree = try_or_return_elixir_err!(
+        usvg::roxmltree::Document::parse_with_options(svg_string, xml_opt)
+            .map_err(|e| e.to_string()),
+        env
+    );
 
-    let mut tree = match usvg::Tree::from_xmltree(&xml_tree, &parsed_options.usvg)
-        .map_err(|e| e.to_string())
-    {
-        Ok(tree) => tree,
-        Err(error_msg) => return Ok((atoms::error(), error_msg).encode(env)),
-    };
+    let mut tree = try_or_return_elixir_err!(
+        usvg::Tree::from_xmltree(&xml_tree, &parsed_options.usvg).map_err(|e| e.to_string()),
+        env
+    );
 
     // fontdb initialization is pretty expensive, so perform it only when needed.
     if tree.has_text_nodes() {
@@ -162,10 +162,7 @@ pub fn svg_to_png<'a>(
         };
     }
 
-    let img = match render_svg(&parsed_options, &tree) {
-        Ok(img) => img,
-        Err(error_msg) => return Ok((atoms::error(), error_msg).encode(env)),
-    };
+    let img = try_or_return_elixir_err!(render_svg(&parsed_options, &tree), env);
 
     match img.save_png(out_png).map_err(|e| e.to_string()) {
         Ok(_) => Ok(atoms::ok().encode(env)),
@@ -174,9 +171,93 @@ pub fn svg_to_png<'a>(
 }
 
 #[rustler::nif]
+pub fn svg_string_to_png<'a>(
+    env: Env<'a>,
+    svg_string: String,
+    out_png: String,
+    options: Options,
+) -> NifResult<Term<'a>> {
+    let input_from = InputFrom::Text(svg_string.clone());
+
+    let parsed_options = try_or_return_elixir_err!(parse_options(input_from, options), env);
+
+    let xml_opt = usvg::roxmltree::ParsingOptions {
+        allow_dtd: true,
+        ..Default::default()
+    };
+
+    let xml_tree = try_or_return_elixir_err!(
+        usvg::roxmltree::Document::parse_with_options(&svg_string, xml_opt)
+            .map_err(|e| e.to_string()),
+        env
+    );
+
+    let mut tree = try_or_return_elixir_err!(
+        usvg::Tree::from_xmltree(&xml_tree, &parsed_options.usvg).map_err(|e| e.to_string()),
+        env
+    );
+
+    // fontdb initialization is pretty expensive, so perform it only when needed.
+    if tree.has_text_nodes() {
+        match load_fonts(&parsed_options) {
+            Ok(fontdb) => tree.convert_text(&fontdb),
+            Err(error) => return Ok((atoms::error(), error).encode(env)),
+        };
+    }
+
+    let img = try_or_return_elixir_err!(render_svg(&parsed_options, &tree), env);
+
+    match img.save_png(out_png).map_err(|e| e.to_string()) {
+        Ok(_) => Ok(atoms::ok().encode(env)),
+        Err(error_msg) => return Ok((atoms::error(), error_msg).encode(env)),
+    }
+}
+
+#[rustler::nif]
+pub fn svg_string_to_png_buffer<'a>(
+    env: Env<'a>,
+    svg_string: String,
+    options: Options,
+) -> NifResult<Term<'a>> {
+    let input_from = InputFrom::Text(svg_string.clone());
+
+    let parsed_options = try_or_return_elixir_err!(parse_options(input_from, options), env);
+
+    let xml_opt = usvg::roxmltree::ParsingOptions {
+        allow_dtd: true,
+        ..Default::default()
+    };
+
+    let xml_tree = try_or_return_elixir_err!(
+        usvg::roxmltree::Document::parse_with_options(&svg_string, xml_opt)
+            .map_err(|e| e.to_string()),
+        env
+    );
+
+    let mut tree = try_or_return_elixir_err!(
+        usvg::Tree::from_xmltree(&xml_tree, &parsed_options.usvg).map_err(|e| e.to_string()),
+        env
+    );
+
+    // fontdb initialization is pretty expensive, so perform it only when needed.
+    if tree.has_text_nodes() {
+        match load_fonts(&parsed_options) {
+            Ok(fontdb) => tree.convert_text(&fontdb),
+            Err(error) => return Ok((atoms::error(), error).encode(env)),
+        };
+    }
+
+    let img = try_or_return_elixir_err!(render_svg(&parsed_options, &tree), env);
+
+    match img.encode_png().map_err(|e| e.to_string()) {
+        Ok(buf) => Ok((atoms::ok(), buf).encode(env)),
+        Err(error_msg) => return Ok((atoms::error(), error_msg).encode(env)),
+    }
+}
+
+#[rustler::nif]
 pub fn list_fonts<'a>(env: Env<'a>, options: Options) -> NifResult<Term<'a>> {
-    let parsed_options = match parse_options(InputFrom::Empty, options)
-    {
+    let parsed_options = match parse_options(InputFrom::Empty, options) {
         Ok(parsed_options) => parsed_options,
         Err(error_msg) => return Ok((atoms::error(), error_msg).encode(env)),
     };
@@ -237,8 +318,9 @@ fn parse_options(in_svg: InputFrom, options: Options) -> Result<ParsedOptions, S
                 .ok()
                 .and_then(|p| p.parent().map(|p| p.to_path_buf())),
 
-            InputFrom::Text(_) | InputFrom::Empty =>
+            InputFrom::Text(_) | InputFrom::Empty => {
                 return Err("Make sure to set resources_dir.".to_string())
+            }
         },
     };
 
@@ -260,11 +342,9 @@ fn parse_options(in_svg: InputFrom, options: Options) -> Result<ParsedOptions, S
     };
 
     let background = match options.background {
-        Some(color_str) => {
-            match color_str.parse::<svgtypes::Color>() {
-                Ok(color) => Some(color),
-                Err(error) => return Err(format!("Error background: {}", error))
-            }
+        Some(color_str) => match color_str.parse::<svgtypes::Color>() {
+            Ok(color) => Some(color),
+            Err(error) => return Err(format!("Error background: {}", error)),
         },
         None => None,
     };
@@ -400,4 +480,12 @@ fn svg_to_skia_color(color: svgtypes::Color) -> tiny_skia::Color {
     tiny_skia::Color::from_rgba8(color.red, color.green, color.blue, color.alpha)
 }
 
-rustler::init!("Elixir.Resvg.Native", [svg_to_png, list_fonts]);
+rustler::init!(
+    "Elixir.Resvg.Native",
+    [
+        svg_to_png,
+        svg_string_to_png,
+        svg_string_to_png_buffer,
+        list_fonts
+    ]
+);
