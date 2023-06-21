@@ -59,7 +59,9 @@ defmodule Resvg.Test do
     test "fail background" do
       input = image_path("rustacean.svg")
       output = image_path("rustacean-bug.png")
-      assert {:error, "Error background: invalid value"} = Resvg.svg_to_png(input, output, background: "bug")
+
+      assert {:error, "Error background: invalid value"} =
+               Resvg.svg_to_png(input, output, background: "bug")
     end
 
     test "zoom svg x2" do
@@ -129,19 +131,27 @@ defmodule Resvg.Test do
     end
 
     test "load fonts from dirs" do
-      {:ok, [font]} = Resvg.list_fonts(skip_system_fonts: true, font_dirs: [font_dir()], resources_dir: @tmp)
+      {:ok, [font]} =
+        Resvg.list_fonts(skip_system_fonts: true, font_dirs: [font_dir()], resources_dir: @tmp)
+
       assert font =~ "Roboto"
     end
 
     test "success load a font file" do
       roboto = font_file("Roboto/Roboto-Regular.ttf")
-      {:ok, [font]} = Resvg.list_fonts(skip_system_fonts: true, font_files: [roboto], resources_dir: @tmp)
+
+      {:ok, [font]} =
+        Resvg.list_fonts(skip_system_fonts: true, font_files: [roboto], resources_dir: @tmp)
+
       assert font =~ "Roboto"
     end
 
     test "fail load a font file" do
       roboto = font_file("Rototo/Rototo-Regular.ttf")
-      {:error, error} = Resvg.list_fonts(skip_system_fonts: true, font_files: [roboto], resources_dir: @tmp)
+
+      {:error, error} =
+        Resvg.list_fonts(skip_system_fonts: true, font_files: [roboto], resources_dir: @tmp)
+
       assert error == "Error loading font file: No such file or directory (os error 2)"
     end
   end

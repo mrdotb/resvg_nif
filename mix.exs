@@ -28,14 +28,13 @@ defmodule Resvg.MixProject do
     [
       {:rustler_precompiled, "~> 0.6.0"},
       {:rustler, "~> 0.28.0", optional: true},
-      {:styler, "~> 0.7", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
     ]
   end
 
   defp package do
     [
-      description: "Responsive emails made easy. NIF bindings for ...",
+      description: "Svg to png. NIF bindings for resvg.",
       maintainers: ["Mrdotb"],
       licenses: ["MIT"],
       files: ~w(lib native .formatter.exs README* LICENSE* mix.exs checksum-*.exs),
