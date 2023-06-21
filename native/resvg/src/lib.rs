@@ -336,7 +336,7 @@ fn parse_options(in_svg: InputFrom, options: Options) -> Result<ParsedOptions, S
             .take()
             .unwrap_or_else(|| "Times New Roman".to_string()),
         font_size: options.font_size as f32,
-        languages: options.languages.clone(),
+        languages: options.languages,
         shape_rendering: str_to_shape_rendering(&options.shape_rendering).unwrap(),
         text_rendering: str_to_text_rendering(&options.text_rendering).unwrap(),
         image_rendering: str_to_image_rendering(&options.image_rendering).unwrap(),
