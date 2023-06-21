@@ -1,21 +1,29 @@
-# ResvgNif
+# Resvg (Rust NIFs for elixir)
 
-**TODO: Add description**
+Native Implemented Function (NIF) bindings for the resvg library.
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
+The package can be installed
 by adding `resvg_nif` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:resvg_nif, "~> 0.1.0"}
+    {:resvg, "~> 0.1.0"}
   ]
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/resvg_nif>.
+## Usage
 
+
+### Options
+
+## Contributing
+
+## Copyright and License
+
+Copyright (c) 2023 Mrdotb
+
+This work is free. You can redistribute it and / or modify it under the terms of the MIT License. See the LICENSE.md file for more details.
