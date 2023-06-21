@@ -84,6 +84,19 @@ defmodule Resvg.Test do
       assert File.exists?(output)
       assert md5(output) == "d8407a3546efe75af450f2625f06d574"
     end
+
+    test "render svg with image tag resolve from resources_dir" do
+      output = image_path("image-test.png")
+      svg_string = """
+        <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"
+             xmlns:xlink="http://www.w3.org/1999/xlink"
+        >
+          <image xlink:href="mdn-logo.png" width="200" height="200" />
+        </svg>
+      """
+      assert :ok = Resvg.svg_string_to_png(svg_string, output, resources_dir: @support_path)
+      assert md5(output) == "5b18933af6a8a4f2ca623ecd7a5db626"
+    end
   end
 
   describe "svg_string_to_png_buffer/3" do
