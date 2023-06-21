@@ -467,11 +467,6 @@ fn render_svg(
         let rtree = resvg::Tree::from_usvg(tree);
         rtree.render(ts, &mut pixmap.as_mut());
 
-        // if parse_options.export_area_drawing {
-        //     trim_pixmap(&rtree, ts, &pixmap).unwrap_or(pixmap)
-        // } else {
-        // pixmap
-        // }
         pixmap
     };
 
