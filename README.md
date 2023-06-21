@@ -1,5 +1,7 @@
 # Resvg (Rust NIFs for elixir)
 
+[![Build Status](https://github.com/mrdotb/resvg_nif/workflows/Tests/badge.svg)](https://github.com/mrdotb/resvg_nif/workflows/Tests/badge.svg)
+
 Native Implemented Function (NIF) bindings for the resvg library.
 
 ## Installation
