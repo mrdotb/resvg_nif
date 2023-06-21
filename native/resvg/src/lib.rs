@@ -90,7 +90,7 @@ enum InputFrom {
 }
 
 struct ParsedOptions {
-    in_svg: InputFrom,
+    // in_svg: InputFrom,
     // out_png: Option<OutputTo>,
     // query_all: bool,
     // export_id: Option<String>,
@@ -319,7 +319,10 @@ fn parse_options(in_svg: InputFrom, options: Options) -> Result<ParsedOptions, S
                 .and_then(|p| p.parent().map(|p| p.to_path_buf())),
 
             InputFrom::Text(_) | InputFrom::Empty => {
-                return Err("Make sure to set resources_dir.".to_string())
+                return Err(
+                    "Make sure to set resources_dir when you are not passing a svg path"
+                        .to_string(),
+                )
             }
         },
     };
@@ -362,7 +365,6 @@ fn parse_options(in_svg: InputFrom, options: Options) -> Result<ParsedOptions, S
         .collect();
 
     Ok(ParsedOptions {
-        in_svg,
         usvg: usvg_options,
         fit_to,
         background,
