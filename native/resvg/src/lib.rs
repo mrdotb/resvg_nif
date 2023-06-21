@@ -1,3 +1,5 @@
+// Based on https://github.com/RazrFalcon/resvg/blob/master/crates/resvg/src/main.rs
+
 use rustler::{Encoder, Env, NifResult, NifStruct, Term};
 use std::path;
 use usvg::{fontdb, ImageRendering, ShapeRendering, TextRendering, TreeParsing, TreeTextToPath};
@@ -84,14 +86,13 @@ pub struct Options {
 
 #[derive(Clone, PartialEq, Debug)]
 enum InputFrom {
-    Text(String),
     File(path::PathBuf),
+    Text,
     Empty,
 }
 
 struct ParsedOptions {
-    // in_svg: InputFrom,
-    // out_png: Option<OutputTo>,
+    // TODO implements these
     // query_all: bool,
     // export_id: Option<String>,
     // export_area_page: bool,
@@ -177,7 +178,7 @@ pub fn svg_string_to_png<'a>(
     out_png: String,
     options: Options,
 ) -> NifResult<Term<'a>> {
-    let input_from = InputFrom::Text(svg_string.clone());
+    let input_from = InputFrom::Text;
 
     let parsed_options = try_or_return_elixir_err!(parse_options(input_from, options), env);
 
@@ -219,7 +220,7 @@ pub fn svg_string_to_png_buffer<'a>(
     svg_string: String,
     options: Options,
 ) -> NifResult<Term<'a>> {
-    let input_from = InputFrom::Text(svg_string.clone());
+    let input_from = InputFrom::Text;
 
     let parsed_options = try_or_return_elixir_err!(parse_options(input_from, options), env);
 
@@ -318,7 +319,7 @@ fn parse_options(in_svg: InputFrom, options: Options) -> Result<ParsedOptions, S
                 .ok()
                 .and_then(|p| p.parent().map(|p| p.to_path_buf())),
 
-            InputFrom::Text(_) | InputFrom::Empty => {
+            InputFrom::Text | InputFrom::Empty => {
                 return Err(
                     "Make sure to set resources_dir when you are not passing a svg path"
                         .to_string(),
