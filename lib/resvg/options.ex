@@ -7,16 +7,20 @@ defmodule Resvg.Options do
   The options for resvg functions.
   """
 
-  @type resvg_option ::
+  @type shape_rendering :: :optimize_speed | :crisp_edges | :geometric_precision
+  @type text_rendering :: :optimize_speed | :optimize_legibility | :geometric_precision
+  @type image_rendering :: :optimize_quality | :optimize_speed
+
+  @type resvg_options :: [
           {:width, non_neg_integer()}
           | {:height, non_neg_integer()}
           | {:zoom, float()}
-          | {:dpi, non_neg_integer()}
+          | {:dpi, 10..4000}
           | {:background, String.t()}
           | {:languages, [String.t()]}
-          | {:shape_rendering, atom()}
-          | {:text_rendering, atom()}
-          | {:image_rendering, atom()}
+          | {:shape_rendering, shape_rendering()}
+          | {:text_rendering, text_rendering()}
+          | {:image_rendering, image_rendering()}
           | {:resources_dir, Path.t()}
           | {:font_family, String.t()}
           | {:font_size, non_neg_integer()}
@@ -28,8 +32,7 @@ defmodule Resvg.Options do
           | {:font_files, [Path.t()]}
           | {:font_dirs, [Path.t()]}
           | {:skip_system_fonts, boolean()}
-
-  @type resvg_options :: [resvg_option()]
+        ]
 
   defstruct width: nil,
             height: nil,
@@ -37,9 +40,9 @@ defmodule Resvg.Options do
             dpi: 96,
             background: nil,
             languages: ["en"],
-            shape_rendering: "GeometricPrecision",
-            text_rendering: "OptimizeLegibility",
-            image_rendering: "OptimizeQuality",
+            shape_rendering: :geometric_precision,
+            text_rendering: :optimize_legibility,
+            image_rendering: :optimize_quality,
             resources_dir: nil,
             font_family: nil,
             font_size: 12,

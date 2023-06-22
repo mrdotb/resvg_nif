@@ -1,4 +1,6 @@
 defmodule Resvg do
+  @external_resource "README.md"
+
   @moduledoc """
   Provides functions to convert svg to png using resvg.
 
@@ -22,7 +24,8 @@ defmodule Resvg do
     * `:image_rendering` - Selects the default image rendering method
     default to `:optimize_quality`.
     * `:resources_dir` - Sets a directory that will be used during relative
-    paths resolving.
+    paths resolving. This field is mandatory for all functions
+    except `svg_to_png/3` because it default to the `svg_input` path.
     * `:font_family` - Sets the default font family that will be used when
     no `font-family` is present, default to `Times New Roman`.
     * `:font_size` - Sets the default font size that will be used when no
@@ -95,18 +98,62 @@ defmodule Resvg do
       Resvg.svg_string_to_png(svg_string, "output.png", resources_dir: "/tmp")
       #=> :ok
   """
+  @spec svg_string_to_png(
+          svg_string :: String.t(),
+          out_png :: Path.t(),
+          options :: Options.resvg_options()
+        ) :: :ok | {:error, String.t()}
   def svg_string_to_png(svg_string, out_png, opts) do
-    options = struct(Resvg.Options, opts)
+    options = struct(Options, opts)
     Resvg.Native.svg_string_to_png(svg_string, out_png, options)
   end
 
+  @doc ~S"""
+  Try to convert `svg_string` to a png buffer..
+
+  `svg_string` must be a valid svg file.
+  `opts` refer to [options](#module-common-options) must at least set the
+  `resources_dir` key to a valid path.
+
+  The functions return `{:ok, buffer}` in case of success. Otherise, it returns 
+  `{:error, reason}` if an error occurs.
+
+  ## Examples
+
+      svg_string = "
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+          <rect width="100" height="100" />
+        </svg>"
+      Resvg.svg_string_to_png(svg_string, "output.png", resources_dir: "/tmp")
+      #=> {:ok, buffer}
+  """
+  @spec svg_string_to_png_buffer(
+          svg_string :: String.t(),
+          options :: Options.resvg_options()
+        ) :: {:ok, binary()} | {:error, String.t()}
   def svg_string_to_png_buffer(svg_string, opts) do
-    options = struct(Resvg.Options, opts)
+    options = struct(Options, opts)
     Resvg.Native.svg_string_to_png_buffer(svg_string, options)
   end
 
+  @doc """
+  List successfully loaded font faces. Useful for debugging.
+
+  `opts` refer to [options](#module-common-options) must at least set the
+  `resources_dir` key to a valid path.
+
+  The functions return `{:ok, fonts_list}` in case of success. Otherise, it returns 
+  `{:error, reason}` if an error occurs.
+
+  ## Examples
+
+      Resvg.list_fonts(resources_dir: "/tmp")
+      #=> {:ok, ["/usr/share/fonts/truetype/dejavu/DejaVuSansMono-BoldOblique.ttf..", ...]}
+  """
+  @spec list_fonts(options :: Options.resvg_options()) ::
+          {:ok, [String.t()]} | {:error, String.t()}
   def list_fonts(opts) do
-    options = struct(Resvg.Options, opts)
+    options = struct(Options, opts)
     Resvg.Native.list_fonts(options)
   end
 end

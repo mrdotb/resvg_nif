@@ -1,6 +1,6 @@
 // Based on https://github.com/RazrFalcon/resvg/blob/master/crates/resvg/src/main.rs
 
-use rustler::{Encoder, Env, NifResult, NifStruct, Term};
+use rustler::{Decoder, Encoder, Env, NifResult, NifStruct, Term};
 use std::path;
 use usvg::{fontdb, ImageRendering, ShapeRendering, TextRendering, TreeParsing, TreeTextToPath};
 
@@ -23,6 +23,13 @@ enum FitTo {
     Size(u32, u32),
     /// Zoom by factor.
     Zoom(f32),
+}
+
+#[derive(Clone, PartialEq, Debug)]
+enum InputFrom {
+    File(path::PathBuf),
+    Text,
+    Empty,
 }
 
 impl FitTo {
@@ -58,6 +65,21 @@ macro_rules! try_or_return_elixir_err {
     };
 }
 
+#[derive(Clone)]
+pub struct ShapeRenderingWrapper {
+    value: ShapeRendering,
+}
+
+#[derive(Clone)]
+pub struct TextRenderingWrapper {
+    value: TextRendering,
+}
+
+#[derive(Clone)]
+pub struct ImageRenderingWrapper {
+    value: ImageRendering,
+}
+
 #[derive(NifStruct)]
 #[module = "Resvg.Options"]
 pub struct Options {
@@ -67,9 +89,9 @@ pub struct Options {
     dpi: u32,
     background: Option<String>,
     languages: Vec<String>,
-    shape_rendering: String,
-    text_rendering: String,
-    image_rendering: String,
+    shape_rendering: ShapeRenderingWrapper,
+    text_rendering: TextRenderingWrapper,
+    image_rendering: ImageRenderingWrapper,
     resources_dir: Option<String>,
 
     font_family: Option<String>,
@@ -84,12 +106,7 @@ pub struct Options {
     skip_system_fonts: bool,
 }
 
-#[derive(Clone, PartialEq, Debug)]
-enum InputFrom {
-    File(path::PathBuf),
-    Text,
-    Empty,
-}
+
 
 struct ParsedOptions {
     // TODO implements these
@@ -338,9 +355,9 @@ fn parse_options(in_svg: InputFrom, options: Options) -> Result<ParsedOptions, S
             .unwrap_or_else(|| "Times New Roman".to_string()),
         font_size: options.font_size as f32,
         languages: options.languages,
-        shape_rendering: str_to_shape_rendering(&options.shape_rendering).unwrap(),
-        text_rendering: str_to_text_rendering(&options.text_rendering).unwrap(),
-        image_rendering: str_to_image_rendering(&options.image_rendering).unwrap(),
+        shape_rendering: options.shape_rendering.get(),
+        text_rendering: options.text_rendering.get(),
+        image_rendering: options.image_rendering.get(),
         default_size,
         image_href_resolver: usvg::ImageHrefResolver::default(),
     };
@@ -418,29 +435,91 @@ fn load_fonts(parsed_options: &ParsedOptions) -> Result<fontdb::Database, String
     Ok(fontdb)
 }
 
-fn str_to_shape_rendering(s: &str) -> Result<ShapeRendering, String> {
-    match s {
-        "OptimizeSpeed" => Ok(ShapeRendering::OptimizeSpeed),
-        "CrispEdges" => Ok(ShapeRendering::CrispEdges),
-        "GeometricPrecision" => Ok(ShapeRendering::GeometricPrecision),
-        _ => Err(format!("{} is not a valid ShapeRendering value", s)),
+impl<'a> Decoder<'a> for ShapeRenderingWrapper {
+    fn decode(term: Term<'a>) -> rustler::NifResult<Self> {
+        let atom = term.atom_to_string()?;
+        let value = match atom.as_str() {
+            "optimize_speed" => ShapeRendering::OptimizeSpeed,
+            "crisp_edges" => ShapeRendering::CrispEdges,
+            "geometric_precision" => ShapeRendering::GeometricPrecision,
+            _ => return Err(rustler::Error::BadArg),
+        };
+        Ok(Self { value })
     }
 }
 
-fn str_to_text_rendering(s: &str) -> Result<TextRendering, String> {
-    match s {
-        "OptimizeSpeed" => Ok(TextRendering::OptimizeSpeed),
-        "OptimizeLegibility" => Ok(TextRendering::OptimizeLegibility),
-        "GeometricPrecision" => Ok(TextRendering::GeometricPrecision),
-        _ => Err(format!("{} is not a valid TextRendering value", s)),
+impl Encoder for ShapeRenderingWrapper {
+    fn encode<'a>(&self, env: Env<'a>) -> Term<'a> {
+        let atom_str = match self.value {
+            ShapeRendering::OptimizeSpeed => "optimize_speed",
+            ShapeRendering::CrispEdges => "crisp_edges",
+            ShapeRendering::GeometricPrecision => "geometric_precision",
+        };
+        atom_str.encode(env)
     }
 }
 
-fn str_to_image_rendering(s: &str) -> Result<ImageRendering, String> {
-    match s {
-        "OptimizeQuality" => Ok(ImageRendering::OptimizeQuality),
-        "OptimizeSpeed" => Ok(ImageRendering::OptimizeSpeed),
-        _ => Err(format!("{} is not a valid ImageRendering value", s)),
+impl ShapeRenderingWrapper {
+    fn get(&self) -> ShapeRendering {
+        self.value
+    }
+}
+
+impl<'a> Decoder<'a> for TextRenderingWrapper {
+    fn decode(term: Term<'a>) -> rustler::NifResult<Self> {
+        let atom = term.atom_to_string()?;
+        let value = match atom.as_str() {
+            "optimize_speed" => TextRendering::OptimizeSpeed,
+            "optimize_legibility" => TextRendering::OptimizeLegibility,
+            "geometric_precision" => TextRendering::GeometricPrecision,
+            _ => return Err(rustler::Error::BadArg),
+        };
+        Ok(Self { value })
+    }
+}
+
+impl Encoder for TextRenderingWrapper {
+    fn encode<'a>(&self, env: Env<'a>) -> Term<'a> {
+        let atom_str = match self.value {
+            TextRendering::OptimizeSpeed => "optimize_speed",
+            TextRendering::OptimizeLegibility=> "optimize_legibility",
+            TextRendering::GeometricPrecision => "geometric_precision",
+        };
+        atom_str.encode(env)
+    }
+}
+
+impl TextRenderingWrapper {
+    fn get(&self) -> TextRendering {
+        self.value
+    }
+}
+
+impl<'a> Decoder<'a> for ImageRenderingWrapper {
+    fn decode(term: Term<'a>) -> rustler::NifResult<Self> {
+        let atom = term.atom_to_string()?;
+        let value = match atom.as_str() {
+            "optimize_quality" => ImageRendering::OptimizeQuality,
+            "optimize_speed" => ImageRendering::OptimizeSpeed,
+            _ => return Err(rustler::Error::BadArg),
+        };
+        Ok(Self { value })
+    }
+}
+
+impl Encoder for ImageRenderingWrapper {
+    fn encode<'a>(&self, env: Env<'a>) -> Term<'a> {
+        let atom_str = match self.value {
+            ImageRendering::OptimizeQuality=> "optimize_quality",
+            ImageRendering::OptimizeSpeed => "optimize_speed",
+        };
+        atom_str.encode(env)
+    }
+}
+
+impl ImageRenderingWrapper {
+    fn get(&self) -> ImageRendering {
+        self.value
     }
 }
 

@@ -9,6 +9,7 @@ defmodule Resvg.MixProject do
       aliases: aliases(),
       app: :resvg,
       deps: deps(),
+      docs: docs(),
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
       name: "resvg",
@@ -37,8 +38,28 @@ defmodule Resvg.MixProject do
       description: "Svg to png. NIF bindings for resvg.",
       maintainers: ["Mrdotb"],
       licenses: ["MIT"],
-      files: ~w(lib native .formatter.exs README* LICENSE* mix.exs checksum-*.exs),
+      files: ~w(
+        lib native .formatter.exs README.md LICENSE.md CHANGELOG.md mix.exs checksum-*.exs
+      )s,
       links: %{"GitHub" => @source_url}
+    ]
+  end
+
+  def docs do
+    [
+      source_ref: "master",
+      main: "readme",
+      extras: [
+        "CHANGELOG.md": [],
+        "CONTRIBUTING.md": [title: "Contributing"],
+        "CODE_OF_CONDUCT.md": [title: "Code of Conduct"],
+        "LICENSE.md": [title: "License"],
+        "README.md": [title: "Overview"]
+      ],
+      source_url: @source_url,
+      source_ref: "v#{@version}",
+      homepage_url: @source_url,
+      formatters: ["html"]
     ]
   end
 
