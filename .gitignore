@@ -39,3 +39,7 @@ resvg_nif-*.tar
 
 # The checksum files for precompiled NIFs
 checksum-*.exs
+
+# livebooks
+/livebooks/*
+!/livebooks/*.livemd

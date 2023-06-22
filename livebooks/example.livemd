@@ -2,8 +2,129 @@
 
 ```elixir
 Mix.install([
-  {:resvg, "~> 0.1"},
+  {:resvg, "~> 0.2"},
   {:req, "~> 0.3"},
   {:kino, "~> 0.9"}
 ])
+```
+
+## Helpers & Glob
+
+```elixir
+defmodule H do
+  def kino_image_from_buffer(buffer) do
+    binary = :erlang.list_to_binary(buffer)
+    Kino.Image.new(binary, :png)
+  end
+
+  def download!(url) do
+    %{body: body} = Req.get!(url)
+    body
+  end
+
+  def download_as!(url, path) do
+    %{body: body} = Req.get!(url)
+    File.write!(path, body)
+  end
+end
+
+path = __DIR__
+```
+
+## Convert a svg to png
+
+```elixir
+rustacean_svg =
+  H.download!(
+    "https://raw.githubusercontent.com/mrdotb/resvg_nif/master/test/support/rustacean.svg"
+  )
+
+{:ok, buffer} = Resvg.svg_string_to_png_buffer(rustacean_svg, resources_dir: path)
+H.kino_image_from_buffer(buffer)
+```
+
+## Set a background color
+
+```elixir
+{:ok, buffer} =
+  Resvg.svg_string_to_png_buffer(rustacean_svg, background: "gold", resources_dir: path)
+
+H.kino_image_from_buffer(buffer)
+```
+
+## Use a custom font
+
+```elixir
+# Download roboto.ttf
+roboto_path = "#{path}/roboto.ttf"
+
+font_file =
+  H.download_as!(
+    "https://raw.githubusercontent.com/mrdotb/resvg_nif/master/test/support/fonts/Roboto/Roboto-Regular.ttf",
+    roboto_path
+  )
+
+svg_string = """
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 150">
+    <style type="text/css">
+      #text {
+        fill: black;
+        font-family: 'Roboto';
+        font-size: 45px;
+        text-anchor: middle;
+      }
+    </style>
+    <text x="50%" y="50%" id="text">Roboto</text>
+  </svg>
+"""
+
+{:ok, buffer} =
+  Resvg.svg_string_to_png_buffer(svg_string, resources_dir: path, font_files: [roboto_path])
+
+H.kino_image_from_buffer(buffer)
+```
+
+## Composition with svg <image> and :resources_dir
+
+```elixir
+H.download_as!(
+  "https://raw.githubusercontent.com/mrdotb/resvg_nif/master/test/support/mdn-logo.png",
+  "#{path}/mdn-logo.png"
+)
+
+svg_string = """
+  <svg xmlns="http://www.w3.org/2000/svg" width="400" height="200"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+  >
+    <image xlink:href="mdn-logo.png" width="200" height="200" />
+    <image xlink:href="mdn-logo.png" x="200" width="200" height="200" />
+  </svg>
+"""
+
+{:ok, buffer} =
+  Resvg.svg_string_to_png_buffer(svg_string, resources_dir: path, font_files: [roboto_path])
+
+H.kino_image_from_buffer(buffer)
+```
+
+## Clip path
+
+```elixir
+svg_string = """
+  <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+  >
+    <defs>
+      <clipPath id="clip-circle">
+        <circle cx="100" cy="100" r="100" fill="#FFFFFF" />
+      </clipPath>
+    </defs>
+    <image xlink:href="mdn-logo.png" width="200" height="200" clip-path="url(#clip-circle)" />
+  </svg>
+"""
+
+{:ok, buffer} =
+  Resvg.svg_string_to_png_buffer(svg_string, resources_dir: path, font_files: [roboto_path])
+
+H.kino_image_from_buffer(buffer)
 ```
