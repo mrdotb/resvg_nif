@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/mrdotb/resvg_nif/workflows/Tests/badge.svg)](https://github.com/mrdotb/resvg_nif/workflows/Tests/badge.svg)
 [![Module Version](https://img.shields.io/hexpm/v/resvg.svg)](https://hex.pm/packages/resvg)
-[![Hex Docs](https://img.shields.io/hexpm/v/resvg.svg)](https://hexdocs.pm/resvg)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/resvg)
 [![Total Download](https://img.shields.io/hexpm/dt/resvg.svg)](https://hex.pm/packages/resvg)
 [![License](https://img.shields.io/hexpm/l/resvg.svg)](https://github.com/mrdotb/resvg_nif/blob/master/LICENSE.md)
 
@@ -19,7 +19,7 @@ by adding `resvg_nif` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:resvg, "~> 0.1.0"}
+    {:resvg, "~> 0.2.0"}
   ]
 end
 ```
