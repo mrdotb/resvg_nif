@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ---
+## [0.3.0] – 2023-07-07
+- Add new function `query_all/2`.
+
 ## [0.2.0] – 2023-06-22
 - Change render types to atom
 
