@@ -63,10 +63,10 @@ defmodule Resvg do
   ## Examples
 
       Resvg.svg_to_png("input.svg", "output.png")
-      #=> :ok
+      :ok
 
       Resvg.svg_to_png("doesnotexist.svg", "output.png")
-      #=> {:error, "Error loading svg file: No such file or directory (os error 2)"}
+      {:error, "Error loading svg file: No such file or directory (os error 2)"}
   """
   @spec svg_to_png(
           in_svg :: Path.t(),
@@ -96,7 +96,7 @@ defmodule Resvg do
           <rect width="100" height="100" />
         </svg>"
       Resvg.svg_string_to_png(svg_string, "output.png", resources_dir: "/tmp")
-      #=> :ok
+      :ok
   """
   @spec svg_string_to_png(
           svg_string :: String.t(),
@@ -125,7 +125,7 @@ defmodule Resvg do
           <rect width="100" height="100" />
         </svg>"
       Resvg.svg_string_to_png(svg_string, "output.png", resources_dir: "/tmp")
-      #=> {:ok, buffer}
+      {:ok, buffer}
   """
   @spec svg_string_to_png_buffer(
           svg_string :: String.t(),
@@ -148,7 +148,7 @@ defmodule Resvg do
   ## Examples
 
       Resvg.list_fonts(resources_dir: "/tmp")
-      #=> {:ok, ["/usr/share/fonts/truetype/dejavu/DejaVuSansMono-BoldOblique.ttf..", ...]}
+      {:ok, ["/usr/share/fonts/truetype/dejavu/DejaVuSansMono-BoldOblique.ttf..", ...]}
   """
   @spec list_fonts(options :: Options.resvg_options()) ::
           {:ok, [String.t()]} | {:error, String.t()}
@@ -168,7 +168,7 @@ defmodule Resvg do
   ## Examples
 
       Resvg.query_all("rustacean.svg")
-      #=> [
+      [
         %Resvg.Native.Node{
           id: "Layer-1",
           x: -63.99300003051758,

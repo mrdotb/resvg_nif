@@ -2,6 +2,8 @@ defmodule Resvg.Native do
   @moduledoc false
 
   defmodule Node do
+    @moduledoc false
+
     defstruct ~w(id x y width height)a
   end
 
