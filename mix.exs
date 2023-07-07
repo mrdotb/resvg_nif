@@ -65,7 +65,7 @@ defmodule Resvg.MixProject do
 
   defp aliases do
     [
-      fmt: [
+      "format.all": [
         "format",
         "cmd cargo fmt --manifest-path native/resvg/Cargo.toml"
       ]

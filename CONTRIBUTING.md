@@ -48,10 +48,10 @@ Try to add tests along with your new feature. This will ensure that your code do
 mix test
 ```
 
-If you’ve changed any Elixir code, please run Elixir’s code formatter before committing your changes:
+If you’ve changed any Elixir code or Rust code, please run Elixir’s and Rust's  code formatter before committing your changes:
 
 ```bash
-mix format
+mix format.all
 ```
 
 This will keep the code style consistent and future code diffs as small as possible.
