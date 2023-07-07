@@ -1,6 +1,10 @@
 defmodule Resvg.Native do
   @moduledoc false
 
+  defmodule Node do
+    defstruct ~w(id x y width height)a
+  end
+
   mix_config = Mix.Project.config()
   version = mix_config[:version]
   github_url = mix_config[:package][:links]["GitHub"]
@@ -28,6 +32,7 @@ defmodule Resvg.Native do
   def svg_string_to_png(_svg_string, _png_path, _options), do: error()
   def svg_string_to_png_buffer(_svg_string, _options), do: error()
   def list_fonts(_options), do: error()
+  def query_all(_in_svg, _options), do: error()
 
   defp error, do: :erlang.nif_error(:nif_not_loaded)
 end

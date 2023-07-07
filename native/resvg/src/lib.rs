@@ -2,7 +2,9 @@
 
 use rustler::{Decoder, Encoder, Env, NifResult, NifStruct, Term};
 use std::path;
-use usvg::{fontdb, ImageRendering, ShapeRendering, TextRendering, TreeParsing, TreeTextToPath};
+use usvg::{
+    fontdb, ImageRendering, NodeExt, ShapeRendering, TextRendering, TreeParsing, TreeTextToPath,
+};
 
 mod atoms {
     rustler::atoms! {
@@ -106,11 +108,18 @@ pub struct Options {
     skip_system_fonts: bool,
 }
 
-
+#[derive(NifStruct)]
+#[module = "Resvg.Native.Node"]
+struct Node {
+    pub id: String,
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+}
 
 struct ParsedOptions {
     // TODO implements these
-    // query_all: bool,
     // export_id: Option<String>,
     // export_area_page: bool,
     // export_area_drawing: bool,
@@ -313,6 +322,71 @@ pub fn list_fonts<'a>(env: Env<'a>, options: Options) -> NifResult<Term<'a>> {
     Ok((atoms::ok(), font_info_strings).encode(env))
 }
 
+#[rustler::nif]
+pub fn query_all<'a>(env: Env<'a>, in_svg: String, options: Options) -> NifResult<Term<'a>> {
+    let input_from = InputFrom::File(path::PathBuf::from(&in_svg));
+
+    let parsed_options = try_or_return_elixir_err!(parse_options(input_from, options), env);
+
+    let mut svg_data = try_or_return_elixir_err!(
+        std::fs::read(&in_svg).map_err(|e| format!("Error loading svg file: {}", e)),
+        env
+    );
+
+    if svg_data.starts_with(&[0x1f, 0x8b]) {
+        svg_data = try_or_return_elixir_err!(
+            usvg::decompress_svgz(&svg_data).map_err(|e| e.to_string()),
+            env
+        );
+    };
+
+    let svg_string = try_or_return_elixir_err!(
+        std::str::from_utf8(&svg_data)
+            .map_err(|_| "provided data has not an UTF-8 encoding".to_string()),
+        env
+    );
+
+    let xml_opt = usvg::roxmltree::ParsingOptions {
+        allow_dtd: true,
+        ..Default::default()
+    };
+
+    let xml_tree = try_or_return_elixir_err!(
+        usvg::roxmltree::Document::parse_with_options(svg_string, xml_opt)
+            .map_err(|e| e.to_string()),
+        env
+    );
+
+    let tree = try_or_return_elixir_err!(
+        usvg::Tree::from_xmltree(&xml_tree, &parsed_options.usvg).map_err(|e| e.to_string()),
+        env
+    );
+
+    fn round_len(v: f32) -> f32 {
+        (v * 1000.0).round() / 1000.0
+    }
+
+    let result: Vec<Node> = tree
+        .root
+        .descendants()
+        .filter_map(|node| {
+            if node.id().is_empty() {
+                None
+            } else {
+                node.calculate_bbox().map(|bbox| Node {
+                    id: node.id().to_string(),
+                    x: round_len(bbox.x()),
+                    y: round_len(bbox.y()),
+                    width: round_len(bbox.width()),
+                    height: round_len(bbox.height()),
+                })
+            }
+        })
+        .collect();
+
+    Ok(result.encode(env))
+}
+
 fn parse_options(in_svg: InputFrom, options: Options) -> Result<ParsedOptions, String> {
     let mut fit_to = FitTo::Original;
     let mut default_size = usvg::Size::from_wh(100.0, 100.0).unwrap();
@@ -482,7 +556,7 @@ impl Encoder for TextRenderingWrapper {
     fn encode<'a>(&self, env: Env<'a>) -> Term<'a> {
         let atom_str = match self.value {
             TextRendering::OptimizeSpeed => "optimize_speed",
-            TextRendering::OptimizeLegibility=> "optimize_legibility",
+            TextRendering::OptimizeLegibility => "optimize_legibility",
             TextRendering::GeometricPrecision => "geometric_precision",
         };
         atom_str.encode(env)
@@ -510,7 +584,7 @@ impl<'a> Decoder<'a> for ImageRenderingWrapper {
 impl Encoder for ImageRenderingWrapper {
     fn encode<'a>(&self, env: Env<'a>) -> Term<'a> {
         let atom_str = match self.value {
-            ImageRendering::OptimizeQuality=> "optimize_quality",
+            ImageRendering::OptimizeQuality => "optimize_quality",
             ImageRendering::OptimizeSpeed => "optimize_speed",
         };
         atom_str.encode(env)
@@ -563,6 +637,7 @@ rustler::init!(
         svg_to_png,
         svg_string_to_png,
         svg_string_to_png_buffer,
-        list_fonts
+        list_fonts,
+        query_all
     ]
 );

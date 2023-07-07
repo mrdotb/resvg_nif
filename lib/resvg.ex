@@ -55,7 +55,7 @@ defmodule Resvg do
 
   `in_svg` must be a path to a valid svg file.
   `out_png` must be a path to a non-existent file.
-  `options` refer to [options](#module-common-options)
+  `opts` refer to [options](#module-common-options)
 
   The functions return `:ok` in case of success. Otherise, it returns 
   `{:error, reason}` if an error occurs.
@@ -155,5 +155,31 @@ defmodule Resvg do
   def list_fonts(opts) do
     options = struct(Options, opts)
     Resvg.Native.list_fonts(options)
+  end
+
+  @doc """
+  Queries all valid SVG ids with bounding boxes
+
+  `opts` refer to [options](#module-common-options)
+
+  The functions return `{:ok, fonts_list}` in case of success. Otherise, it returns 
+  `{:error, reason}` if an error occurs.
+
+  ## Examples
+
+      Resvg.query_all("rustacean.svg")
+      #=> [
+        %Resvg.Native.Node{
+          id: "Layer-1",
+          x: -63.99300003051758,
+          y: 90.14399719238281,
+          width: 1304.344970703125,
+          height: 613.6170043945312
+        }
+      ]
+  """
+  def query_all(in_svg, opts \\ []) do
+    options = struct(Options, opts)
+    Resvg.Native.query_all(in_svg, options)
   end
 end

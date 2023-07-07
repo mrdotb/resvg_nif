@@ -155,4 +155,21 @@ defmodule Resvg.Test do
       assert error == "Error loading font file: No such file or directory (os error 2)"
     end
   end
+
+  describe "query_all/2" do
+    test "returns id list" do
+      input = image_path("rustacean.svg")
+
+      [node] = Resvg.query_all(input)
+
+      assert node ==
+               %Resvg.Native.Node{
+                 id: "Layer-1",
+                 x: -63.99300003051758,
+                 y: 90.14399719238281,
+                 width: 1304.344970703125,
+                 height: 613.6170043945312
+               }
+    end
+  end
 end
