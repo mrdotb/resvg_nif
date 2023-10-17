@@ -268,7 +268,7 @@ version = "0.1.0"
 dependencies = [
  "resvg 0.35.0",
  "rustler",
- "svgtypes",
+ "svgtypes 0.12.0",
  "tiny-skia",
  "usvg",
 ]
@@ -285,7 +285,7 @@ dependencies = [
  "pico-args",
  "png",
  "rgb",
- "svgtypes",
+ "svgtypes 0.11.0",
  "tiny-skia",
  "usvg",
 ]
@@ -407,6 +407,16 @@ name = "svgtypes"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed4b0611e7f3277f68c0fa18e385d9e2d26923691379690039548f867cef02a7"
+dependencies = [
+ "kurbo",
+ "siphasher",
+]
+
+[[package]]
+name = "svgtypes"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d71499ff2d42f59d26edb21369a308ede691421f79ebc0f001e2b1fd3a7c9e52"
 dependencies = [
  "kurbo",
  "siphasher",
@@ -556,7 +566,7 @@ dependencies = [
  "roxmltree",
  "simplecss",
  "siphasher",
- "svgtypes",
+ "svgtypes 0.11.0",
  "usvg-tree",
 ]
 
@@ -584,7 +594,7 @@ checksum = "7939a7e4ed21cadb5d311d6339730681c3e24c3e81d60065be80e485d3fc8b92"
 dependencies = [
  "rctree",
  "strict-num",
- "svgtypes",
+ "svgtypes 0.11.0",
  "tiny-skia-path",
 ]
 
