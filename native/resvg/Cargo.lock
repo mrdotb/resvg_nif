@@ -269,7 +269,7 @@ dependencies = [
  "resvg 0.35.0",
  "rustler",
  "svgtypes 0.13.0",
- "tiny-skia",
+ "tiny-skia 0.11.3",
  "usvg",
 ]
 
@@ -286,7 +286,7 @@ dependencies = [
  "png",
  "rgb",
  "svgtypes 0.11.0",
- "tiny-skia",
+ "tiny-skia 0.10.0",
  "usvg",
 ]
 
@@ -445,7 +445,22 @@ dependencies = [
  "cfg-if",
  "log",
  "png",
- "tiny-skia-path",
+ "tiny-skia-path 0.10.0",
+]
+
+[[package]]
+name = "tiny-skia"
+version = "0.11.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6a067b809476893fce6a254cf285850ff69c847e6cfbade6a20b655b6c7e80d"
+dependencies = [
+ "arrayref",
+ "arrayvec",
+ "bytemuck",
+ "cfg-if",
+ "log",
+ "png",
+ "tiny-skia-path 0.11.3",
 ]
 
 [[package]]
@@ -453,6 +468,17 @@ name = "tiny-skia-path"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2f60aa35c89ac2687ace1a2556eaaea68e8c0d47408a2e3e7f5c98a489e7281c"
+dependencies = [
+ "arrayref",
+ "bytemuck",
+ "strict-num",
+]
+
+[[package]]
+name = "tiny-skia-path"
+version = "0.11.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5de35e8a90052baaaf61f171680ac2f8e925a1e43ea9d2e3a00514772250e541"
 dependencies = [
  "arrayref",
  "bytemuck",
@@ -595,7 +621,7 @@ dependencies = [
  "rctree",
  "strict-num",
  "svgtypes 0.11.0",
- "tiny-skia-path",
+ "tiny-skia-path 0.10.0",
 ]
 
 [[package]]
