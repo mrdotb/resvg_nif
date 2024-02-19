@@ -11,7 +11,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-resvg = "0.35.0"
+resvg = "0.40.0"
 rustler = "0.30.0"
 svgtypes = "0.13"
 tiny-skia = "0.10"
