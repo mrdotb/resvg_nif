@@ -161,9 +161,9 @@ dependencies = [
 
 [[package]]
 name = "kurbo"
-version = "0.10.4"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1618d4ebd923e97d67e7cd363d80aef35fe961005cbbbb3d2dad8bdd1bc63440"
+checksum = "6e5aa9f0f96a938266bdb12928a67169e8d22c6a786fda8ed984b85e6ba93c3c"
 dependencies = [
  "arrayvec",
  "smallvec",
@@ -278,7 +278,7 @@ version = "0.1.0"
 dependencies = [
  "resvg 0.35.0",
  "rustler",
- "svgtypes 0.14.0",
+ "svgtypes 0.15.0",
  "tiny-skia",
  "usvg",
 ]
@@ -389,6 +389,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7bd3e3206899af3f8b12af284fafc038cc1dc2b41d1b89dd17297221c5d225de"
 
 [[package]]
+name = "siphasher"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "56199f7ddabf13fe5074ce809e7d3f42b42ae711800501b5b16ea82ad029c39d"
+
+[[package]]
 name = "slotmap"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -419,17 +425,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed4b0611e7f3277f68c0fa18e385d9e2d26923691379690039548f867cef02a7"
 dependencies = [
  "kurbo 0.9.5",
- "siphasher",
+ "siphasher 0.3.10",
 ]
 
 [[package]]
 name = "svgtypes"
-version = "0.14.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "59d7618f12b51be8171a7cfdda1e7a93f79cbc57c4e7adf89a749cf671125241"
+checksum = "d97ca9a891c9c70da8139ac9d8e8ea36a210fa21bb50eccd75d4a9561c83e87f"
 dependencies = [
- "kurbo 0.10.4",
- "siphasher",
+ "kurbo 0.11.0",
+ "siphasher 1.0.1",
 ]
 
 [[package]]
@@ -575,7 +581,7 @@ dependencies = [
  "log",
  "roxmltree",
  "simplecss",
- "siphasher",
+ "siphasher 0.3.10",
  "svgtypes 0.11.0",
  "usvg-tree",
 ]

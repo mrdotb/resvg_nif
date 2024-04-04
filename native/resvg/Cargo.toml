@@ -12,7 +12,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 resvg = "0.35.0"
-svgtypes = "0.14"
+svgtypes = "0.15"
 rustler = "0.32.1"
 tiny-skia = "0.10"
 usvg = "0.35.0"
