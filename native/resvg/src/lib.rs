@@ -361,7 +361,7 @@ pub fn query_all<'a>(env: Env<'a>, in_svg: String, options: Options) -> NifResul
         usvg::Tree::from_xmltree(&xml_tree, &parsed_options.usvg).map_err(|e| e.to_string()),
         env
     );
-    
+
     // fontdb initialization is pretty expensive, so perform it only when needed.
     if tree.has_text_nodes() {
         match load_fonts(&parsed_options) {
