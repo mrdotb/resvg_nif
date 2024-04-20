@@ -357,10 +357,18 @@ pub fn query_all<'a>(env: Env<'a>, in_svg: String, options: Options) -> NifResul
         env
     );
 
-    let tree = try_or_return_elixir_err!(
+    let mut tree = try_or_return_elixir_err!(
         usvg::Tree::from_xmltree(&xml_tree, &parsed_options.usvg).map_err(|e| e.to_string()),
         env
     );
+
+    // fontdb initialization is pretty expensive, so perform it only when needed.
+    if tree.has_text_nodes() {
+        match load_fonts(&parsed_options) {
+            Ok(fontdb) => tree.convert_text(&fontdb),
+            Err(error) => return Ok((atoms::error(), error).encode(env)),
+        };
+    }
 
     fn round_len(v: f32) -> f32 {
         (v * 1000.0).round() / 1000.0

@@ -171,5 +171,28 @@ defmodule Resvg.Test do
                  height: 613.6170043945312
                }
     end
+
+    test "measures text elements if the right font files are given" do
+      roboto = font_file("Roboto/Roboto-Regular.ttf")
+
+      input = image_path("text-measurement.svg")
+
+      [node] = Resvg.query_all(input, font_files: [roboto], resources_dir: @tmp)
+
+      assert node ==
+               %Resvg.Native.Node{
+                 id: "Text-Element-1",
+                 x: 0.28700000047683716,
+                 y: -8.531000137329102,
+                 width: 85.18399810791016,
+                 height: 8.64799976348877
+               }
+    end
+
+    test "doesn't measure text elements if the right font files are not given" do
+      input = image_path("text-measurement.svg")
+
+      assert Resvg.query_all(input, font_files: []) == []
+    end
   end
 end
