@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ---
+
+## [0.3.2] – 2024-06-21
+- Update dependencies.
+
+## [0.3.1] – 2024-04-20
+- Fix `query_all/2` by loading the fonts to get the correct size.
+
 ## [0.3.0] – 2023-07-07
 - Add new function `query_all/2`.
 
