@@ -272,7 +272,7 @@ version = "0.1.0"
 dependencies = [
  "resvg 0.35.0",
  "rustler",
- "svgtypes 0.15.1",
+ "svgtypes 0.15.2",
  "tiny-skia",
  "usvg",
 ]
@@ -423,9 +423,9 @@ dependencies = [
 
 [[package]]
 name = "svgtypes"
-version = "0.15.1"
+version = "0.15.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fae3064df9b89391c9a76a0425a69d124aee9c5c28455204709e72c39868a43c"
+checksum = "794de53cc48eaabeed0ab6a3404a65f40b3e38c067e4435883a65d2aa4ca000e"
 dependencies = [
  "kurbo 0.11.0",
  "siphasher 1.0.1",
