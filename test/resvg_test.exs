@@ -1,5 +1,6 @@
 defmodule Resvg.Test do
   use ExUnit.Case
+  import Approval
 
   @support_path Path.join(__DIR__, "support")
   @tmp System.tmp_dir!()
@@ -16,21 +17,20 @@ defmodule Resvg.Test do
     Path.join(font_dir(), name)
   end
 
-  defp md5(path) do
-    binary = File.read!(path)
-
-    :md5
-    |> :crypto.hash(binary)
-    |> Base.encode16(case: :lower)
-  end
-
   describe "svg_to_png/3" do
     test "success convert rustacean.svg to a png image" do
       input = image_path("rustacean.svg")
-      output = image_path("rustacean.png")
+      output = image_path("snapshots/rustacean.png")
+      reference = image_path("rustacean-reference.png")
+
       assert :ok = Resvg.svg_to_png(input, output)
       assert File.exists?(output)
-      assert md5(output) == "317281192ae68db988da23edb5387dab"
+
+      approve(
+        snapshot: File.read!(output),
+        reference: File.read!(reference),
+        reviewed: true
+      )
     end
 
     test "fail input does not exist" do
@@ -42,18 +42,32 @@ defmodule Resvg.Test do
 
     test "export to specific width height" do
       input = image_path("rustacean.svg")
-      output = image_path("rustacean-120x80.png")
+      output = image_path("snapshots/rustacean-120x80.png")
+      reference = image_path("rustacean-120x80-reference.png")
+
       assert :ok = Resvg.svg_to_png(input, output, width: 120, height: 80)
       assert File.exists?(output)
-      assert md5(output) == "64b2cb45f5324b51b8949ce143f6f539"
+
+      approve(
+        snapshot: File.read!(output),
+        reference: File.read!(reference),
+        reviewed: true
+      )
     end
 
     test "set red background" do
       input = image_path("rustacean.svg")
-      output = image_path("rustacean-red.png")
+      output = image_path("snapshots/rustacean-red.png")
+      reference = image_path("rustacean-red-reference.png")
+
       assert :ok = Resvg.svg_to_png(input, output, background: "red")
       assert File.exists?(output)
-      assert md5(output) == "1c3bb47193ae29f9aa844779f632cb8e"
+
+      approve(
+        snapshot: File.read!(output),
+        reference: File.read!(reference),
+        reviewed: true
+      )
     end
 
     test "fail background" do
@@ -66,10 +80,17 @@ defmodule Resvg.Test do
 
     test "zoom svg x2" do
       input = image_path("rustacean.svg")
-      output = image_path("rustacean-zoom.png")
+      output = image_path("snapshots/rustacean-zoom.png")
+      reference = image_path("rustacean-zoom-reference.png")
+
       assert :ok = Resvg.svg_to_png(input, output, zoom: 2.0)
       assert File.exists?(output)
-      assert md5(output) == "8b94df6749215bc82373c58841df7e9c"
+
+      approve(
+        snapshot: File.read!(output),
+        reference: File.read!(reference),
+        reviewed: true
+      )
     end
   end
 
@@ -82,13 +103,21 @@ defmodule Resvg.Test do
       """
 
       output = image_path("cloud.png")
+      reference = image_path("cloud-reference.png")
+
       assert :ok = Resvg.svg_string_to_png(svg_string, output, resources_dir: @tmp)
       assert File.exists?(output)
-      assert md5(output) == "d8407a3546efe75af450f2625f06d574"
+
+      approve(
+        snapshot: File.read!(output),
+        reference: File.read!(reference),
+        reviewed: true
+      )
     end
 
     test "render svg with image tag resolve from resources_dir" do
-      output = image_path("image-test.png")
+      output = image_path("snapshots/image-test.png")
+      reference = image_path("image-test-reference.png")
 
       svg_string = """
         <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"
@@ -99,7 +128,12 @@ defmodule Resvg.Test do
       """
 
       assert :ok = Resvg.svg_string_to_png(svg_string, output, resources_dir: @support_path)
-      assert md5(output) == "5b18933af6a8a4f2ca623ecd7a5db626"
+
+      approve(
+        snapshot: File.read!(output),
+        reference: File.read!(reference),
+        reviewed: true
+      )
     end
   end
 
@@ -112,10 +146,93 @@ defmodule Resvg.Test do
       """
 
       output = image_path("cloud-from-buf.png")
+      reference = image_path("cloud.png")
+
       assert {:ok, buffer} = Resvg.svg_string_to_png_buffer(svg_string, resources_dir: @tmp)
       :ok = File.write!(output, buffer)
       assert File.exists?(output)
-      assert md5(output) == "d8407a3546efe75af450f2625f06d574"
+
+      approve(
+        snapshot: File.read!(output),
+        reference: File.read!(reference),
+        reviewed: true
+      )
+    end
+  end
+
+  describe "revg deals correctly with <tspan> elements inside a <text> element" do
+    # NOTE (tmbb)
+    # This is a minimal reproducible test case for a bug I found in resvg before v0.40.
+    # I don't know why this specific example triggered the bug, but it's a useful test
+    # case to keep in case there is some regression in Resvg
+
+    # Because of repetitiveness in the rust rendering functions,
+    # we test the behaviour in all of them.
+    test "- function svg_string_to_png/3" do
+      input = image_path("text-font-change.svg")
+      output = image_path("snapshots/text-font-change_svg_string_to_png.png")
+      reference = image_path("text-font-change-reference.png")
+
+      svg_string = File.read!(input)
+
+      :ok =
+        Resvg.svg_string_to_png(svg_string, output,
+          dpi: 256,
+          skip_system_fonts: true,
+          resources_dir: @tmp,
+          font_dirs: [font_dir()]
+        )
+
+      approve(
+        snapshot: File.read!(output),
+        reference: File.read!(reference),
+        reviewed: true
+      )
+    end
+
+    test "- function svg_string_to_png_buffer/3" do
+      input = image_path("text-font-change.svg")
+      output = image_path("snapshots/text-font-change_svg_string_to_png_buffer.png")
+      reference = image_path("text-font-change-reference.png")
+
+      svg_string = File.read!(input)
+
+      {:ok, image_data} =
+        Resvg.svg_string_to_png_buffer(svg_string,
+          dpi: 256,
+          skip_system_fonts: true,
+          resources_dir: @tmp,
+          font_dirs: [font_dir()]
+        )
+
+      # Write it out becuase it's easier
+      File.write!(output, image_data)
+
+      approve(
+        snapshot: File.read!(output),
+        reference: File.read!(reference),
+        reviewed: true
+      )
+    end
+
+    test "- function svg_to_png/3" do
+      input = image_path("text-font-change.svg")
+      output = image_path("snapshots/text-font-change_svg_to_png.png")
+      reference = image_path("text-font-change-reference.png")
+
+      :ok =
+        Resvg.svg_to_png(input, output,
+          dpi: 256,
+          skip_system_fonts: true,
+          resources_dir: @tmp,
+          font_dirs: [font_dir()]
+        )
+
+      approve(
+        snapshot: File.read!(output),
+        reference: File.read!(reference),
+        reviewed: true
+      )
     end
   end
 
@@ -131,14 +248,19 @@ defmodule Resvg.Test do
     end
 
     test "load fonts from dirs" do
-      {:ok, [font]} =
+      {:ok, fonts} =
         Resvg.list_fonts(skip_system_fonts: true, font_dirs: [font_dir()], resources_dir: @tmp)
 
-      assert font =~ "Roboto"
+      assert is_list(fonts)
+      assert length(fonts) == 3
+
+      assert Enum.any?(fonts, fn f -> f =~ "Roboto" end)
+      assert Enum.any?(fonts, fn f -> f =~ "LinLibertine" end)
+      assert Enum.any?(fonts, fn f -> f =~ "Ubuntu" end)
     end
 
     test "success load a font file" do
-      roboto = font_file("Roboto/Roboto-Regular.ttf")
+      roboto = font_file("Roboto-Regular.ttf")
 
       {:ok, [font]} =
         Resvg.list_fonts(skip_system_fonts: true, font_files: [roboto], resources_dir: @tmp)
@@ -162,31 +284,25 @@ defmodule Resvg.Test do
 
       [node] = Resvg.query_all(input)
 
-      assert node ==
-               %Resvg.Native.Node{
-                 id: "Layer-1",
-                 x: -63.99300003051758,
-                 y: 90.14399719238281,
-                 width: 1304.344970703125,
-                 height: 613.6170043945312
-               }
+      assert node.id == "Layer-1"
+      assert_in_delta(node.x, 13.1080, 0.0001)
+      assert_in_delta(node.y, 90.14399, 0.0001)
+      assert_in_delta(node.width, 1170.8819, 0.0001)
+      assert_in_delta(node.height, 612.8910, 0.0001)
     end
 
     test "measures text elements if the right font files are given" do
-      roboto = font_file("Roboto/Roboto-Regular.ttf")
+      roboto = font_file("Roboto-Regular.ttf")
 
       input = image_path("text-measurement.svg")
 
       [node] = Resvg.query_all(input, font_files: [roboto], resources_dir: @tmp)
 
-      assert node ==
-               %Resvg.Native.Node{
-                 id: "Text-Element-1",
-                 x: 0.28700000047683716,
-                 y: -8.531000137329102,
-                 width: 85.18399810791016,
-                 height: 8.64799976348877
-               }
+      assert node.id == "Text-Element-1"
+      assert_in_delta(node.x, 0.2870, 0.0001)
+      assert_in_delta(node.y, -8.5310, 0.0001)
+      assert_in_delta(node.width, 85.1839, 0.0001)
+      assert_in_delta(node.height, 8.6479, 0.0001)
     end
 
     test "doesn't measure text elements if the right font files are not given" do
