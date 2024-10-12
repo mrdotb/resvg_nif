@@ -57,7 +57,7 @@ defmodule Resvg do
   `out_png` must be a path to a non-existent file.
   `opts` refer to [options](#module-common-options)
 
-  The functions return `:ok` in case of success. Otherise, it returns 
+  The functions return `:ok` in case of success. Otherise, it returns
   `{:error, reason}` if an error occurs.
 
   ## Examples
@@ -86,7 +86,7 @@ defmodule Resvg do
   `opts` refer to [options](#module-common-options) must at least set the
   `resources_dir` key to a valid path.
 
-  The functions return `:ok` in case of success. Otherise, it returns 
+  The functions return `:ok` in case of success. Otherise, it returns
   `{:error, reason}` if an error occurs.
 
   ## Examples
@@ -115,7 +115,7 @@ defmodule Resvg do
   `opts` refer to [options](#module-common-options) must at least set the
   `resources_dir` key to a valid path.
 
-  The functions return `{:ok, buffer}` in case of success. Otherise, it returns 
+  The functions return `{:ok, buffer}` in case of success. Otherise, it returns
   `{:error, reason}` if an error occurs.
 
   ## Examples
@@ -142,7 +142,7 @@ defmodule Resvg do
   `opts` refer to [options](#module-common-options) must at least set the
   `resources_dir` key to a valid path.
 
-  The functions return `{:ok, fonts_list}` in case of success. Otherise, it returns 
+  The functions return `{:ok, fonts_list}` in case of success. Otherise, it returns
   `{:error, reason}` if an error occurs.
 
   ## Examples
@@ -162,8 +162,7 @@ defmodule Resvg do
 
   `opts` refer to [options](#module-common-options)
 
-  The functions return `{:ok, fonts_list}` in case of success. Otherise, it returns 
-  `{:error, reason}` if an error occurs.
+  The functions return a list of `%Rsvg.Native.Node{}`s.
 
   ## Examples
 
