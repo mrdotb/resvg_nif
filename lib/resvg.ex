@@ -162,8 +162,7 @@ defmodule Resvg do
 
   `opts` refer to [options](#module-common-options)
 
-  The functions return `{:ok, fonts_list}` in case of success. Otherise, it returns
-  `{:error, reason}` if an error occurs.
+  The functions return a list of `%Rsvg.Native.Node{}`s.
 
   ## Examples
 
