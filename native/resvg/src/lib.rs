@@ -161,40 +161,6 @@ struct ParsedOptions<'a> {
     skip_system_fonts: bool,
 }
 
-// fn render_to_png_maybe_loading_fonts(svg_string: String, parsed_options: &mut ParsedOptions) -> Result< {
-//     let font_properties = FontProperties::from_parsed_options(&parsed_options);
-
-//     let xml_opt = usvg::roxmltree::ParsingOptions {
-//         allow_dtd: true,
-//         ..Default::default()
-//     };
-
-//     let xml_tree = try_or_return_elixir_err!(
-//         usvg::roxmltree::Document::parse_with_options(svg_string, xml_opt)
-//             .map_err(|e| e.to_string()),
-//         env
-//     );
-
-//     // fontdb initialization is pretty expensive, so perform it only when needed.
-//     let has_text_nodes = xml_tree
-//         .descendants()
-//         .any(|n| n.has_tag_name(("http://www.w3.org/2000/svg", "text")));
-
-//     if has_text_nodes {
-//         match load_fonts(&font_properties, parsed_options.usvg.fontdb_mut()) {
-//             Ok(_) => (),
-//             Err(error) => return Ok((atoms::error(), error).encode(env))
-//         };
-//     }
-
-//     let tree = try_or_return_elixir_err!(
-//         usvg::Tree::from_xmltree(&xml_tree, &parsed_options.usvg).map_err(|e| e.to_string()),
-//         env
-//     );
-
-//     Ok(tree)
-// }
-
 #[rustler::nif]
 pub fn svg_to_png<'a>(
     env: Env<'a>,
@@ -316,7 +282,8 @@ pub fn svg_string_to_png_buffer<'a>(
 ) -> NifResult<Term<'a>> {
     let input_from = InputFrom::Text;
 
-    let parsed_options = try_or_return_elixir_err!(parse_options(input_from, options), env);
+    let mut parsed_options = try_or_return_elixir_err!(parse_options(input_from, options), env);
+    let font_properties = FontProperties::from_parsed_options(&parsed_options);
 
     let xml_opt = usvg::roxmltree::ParsingOptions {
         allow_dtd: true,
@@ -328,6 +295,17 @@ pub fn svg_string_to_png_buffer<'a>(
             .map_err(|e| e.to_string()),
         env
     );
+
+    let has_text_nodes = xml_tree
+        .descendants()
+        .any(|n| n.has_tag_name(("http://www.w3.org/2000/svg", "text")));
+
+    if has_text_nodes {
+        match load_fonts(&font_properties, parsed_options.usvg.fontdb_mut()) {
+            Ok(_) => (),
+            Err(error) => return Ok((atoms::error(), error).encode(env))
+        };
+    }
 
     let tree = try_or_return_elixir_err!(
         usvg::Tree::from_xmltree(&xml_tree, &parsed_options.usvg).map_err(|e| e.to_string()),

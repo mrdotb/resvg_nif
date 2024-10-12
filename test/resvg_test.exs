@@ -25,7 +25,7 @@ defmodule Resvg.Test do
   describe "svg_to_png/3" do
     test "success convert rustacean.svg to a png image" do
       input = image_path("rustacean.svg")
-      output = image_path("rustacean.png")
+      output = image_path("snapshots/rustacean.png")
       reference = image_path("rustacean-reference.png")
 
       assert :ok = Resvg.svg_to_png(input, output)
@@ -45,7 +45,7 @@ defmodule Resvg.Test do
 
     test "export to specific width height" do
       input = image_path("rustacean.svg")
-      output = image_path("rustacean-120x80.png")
+      output = image_path("snapshots/rustacean-120x80.png")
       reference = image_path("rustacean-120x80-reference.png")
 
       assert :ok = Resvg.svg_to_png(input, output, width: 120, height: 80)
@@ -58,7 +58,7 @@ defmodule Resvg.Test do
 
     test "set red background" do
       input = image_path("rustacean.svg")
-      output = image_path("rustacean-red.png")
+      output = image_path("snapshots/rustacean-red.png")
       reference = image_path("rustacean-red-reference.png")
 
       assert :ok = Resvg.svg_to_png(input, output, background: "red")
@@ -79,7 +79,7 @@ defmodule Resvg.Test do
 
     test "zoom svg x2" do
       input = image_path("rustacean.svg")
-      output = image_path("rustacean-zoom.png")
+      output = image_path("snapshots/rustacean-zoom.png")
       reference = image_path("rustacean-zoom-reference.png")
 
       assert :ok = Resvg.svg_to_png(input, output, zoom: 2.0)
@@ -111,7 +111,7 @@ defmodule Resvg.Test do
     end
 
     test "render svg with image tag resolve from resources_dir" do
-      output = image_path("image-test.png")
+      output = image_path("snapshots/image-test.png")
       reference = image_path("image-test-reference.png")
 
       svg_string = """
@@ -127,9 +127,6 @@ defmodule Resvg.Test do
       approve snapshot: File.read!(output),
               reference: File.read!(reference),
               reviewed: true
-
-      # Renove the snapshot file
-      File.rm!(output)
     end
   end
 
@@ -154,16 +151,19 @@ defmodule Resvg.Test do
     end
   end
 
-  test "revg deals correctly with <tspan> elements inside a <text> element" do
+  describe "revg deals correctly with <tspan> elements inside a <text> element" do
     # NOTE (tmbb)
     # This is a minimal reproducible test case for a bug I found in resvg before v0.40.
     # I don't know why this specific example triggered the bug, but it's a useful test
     # case to keep in case there is some regression in Resvg
-    input = image_path("text-font-change.svg")
-    output = image_path("text-font-change.png")
-    reference = image_path("text-font-change-reference.png")
 
-    try do
+    # Beacuse of repetitiveness in the rust rendering functions,
+    # we test the behaviour in all of them.
+    test "- function svg_string_to_png/3" do
+      input = image_path("text-font-change.svg")
+      output = image_path("snapshots/text-font-change_svg_string_to_png.png")
+      reference = image_path("text-font-change-reference.png")
+
       svg_string = File.read!(input)
 
       :ok = Resvg.svg_string_to_png(svg_string, output,
@@ -173,18 +173,51 @@ defmodule Resvg.Test do
         font_dirs: [font_dir()]
       )
 
-      assert File.exists?(output)
+      approve snapshot: File.read!(output),
+              reference: File.read!(reference),
+              reviewed: true
+    end
+
+    test "- function svg_string_to_png_buffer/3" do
+      input = image_path("text-font-change.svg")
+      output = image_path("snapshots/text-font-change_svg_string_to_png_buffer.png")
+      reference = image_path("text-font-change-reference.png")
+
+      svg_string = File.read!(input)
+
+      {:ok, image_data} = Resvg.svg_string_to_png_buffer(svg_string,
+        dpi: 256,
+        skip_system_fonts: true,
+        resources_dir: @tmp,
+        font_dirs: [font_dir()]
+      )
+
+      # Write it out becuase it's easier
+      File.write!(output, image_data)
 
       approve snapshot: File.read!(output),
               reference: File.read!(reference),
               reviewed: true
-    after
-      # If an output has been generated, delete it
-      if File.exists?(output) do
-        File.rm!(output)
-      end
+    end
+
+    test "- function svg_to_png/3" do
+      input = image_path("text-font-change.svg")
+      output = image_path("snapshots/text-font-change_svg_to_png.png")
+      reference = image_path("text-font-change-reference.png")
+
+      :ok= Resvg.svg_to_png(input, output,
+        dpi: 256,
+        skip_system_fonts: true,
+        resources_dir: @tmp,
+        font_dirs: [font_dir()]
+      )
+
+      approve snapshot: File.read!(output),
+              reference: File.read!(reference),
+              reviewed: true
     end
   end
+
 
   describe "list_fonts/1" do
     test "return fonts list" do
