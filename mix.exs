@@ -69,6 +69,10 @@ defmodule Resvg.MixProject do
       "format.all": [
         "format",
         "cmd cargo fmt --manifest-path native/resvg/Cargo.toml"
+      ],
+      "format.check": [
+        "format --check-formatted",
+        "cmd cargo fmt --manifest-path native/resvg/Cargo.toml -- --check"
       ]
     ]
   end
