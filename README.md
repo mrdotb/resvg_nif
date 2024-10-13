@@ -51,6 +51,17 @@ You can contribute to resvg_nif. Please check the [CONTRIBUTING.md](CONTRIBUTING
 
 This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to our [CODE_OF_CONDUCT.md](/CODE_OF_CONDUCT.md).
 
+### How to release a new version to hex
+
+1. Update the version in both `mix.exs` and `README.md`.
+2. Tag the commit with the version number, for example: `git tag v0.4.0 commit_hash`.
+3. Push the commit and the tag using: `git push origin master && git push --tags`.
+4. Wait for the CI to generate all the NIFs.
+5. Generate the NIF checksum with: `mix rustler_precompiled.download Resvg.Native --all`.
+6. Verify that the generated checksum is correct.
+7. Publish the package with: `mix hex.publish`.
+
+Let me know if you'd like to adjust anything further!
 ## Copyright and License
 
 Copyright (c) 2023 Mrdotb
