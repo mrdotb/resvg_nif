@@ -1,9 +1,5 @@
 defmodule Resvg.Test do
   use ExUnit.Case
-  # This external package is just a small single-module helper
-  # I've written to make it easy to compare snapshots
-  # to a reference image, and even to generate the reference image
-  # the first time the test is run (it must be reviewed, of course)
   import Approval
 
 
@@ -157,7 +153,7 @@ defmodule Resvg.Test do
     # I don't know why this specific example triggered the bug, but it's a useful test
     # case to keep in case there is some regression in Resvg
 
-    # Beacuse of repetitiveness in the rust rendering functions,
+    # Because of repetitiveness in the rust rendering functions,
     # we test the behaviour in all of them.
     test "- function svg_string_to_png/3" do
       input = image_path("text-font-change.svg")
