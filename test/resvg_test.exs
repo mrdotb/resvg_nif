@@ -282,10 +282,10 @@ defmodule Resvg.Test do
       [node] = Resvg.query_all(input, font_files: [roboto], resources_dir: @tmp)
 
       assert node.id == "Text-Element-1"
-      assert_in_delta(node.x, 0.0, 0.0001)
-      assert_in_delta(node.y, -11.1330, 0.0001)
-      assert_in_delta(node.width, 85.9039, 0.0001)
-      assert_in_delta(node.height, 14.06299, 0.0001)
+      assert_in_delta(node.x, 0.2870, 0.0001)
+      assert_in_delta(node.y, -8.5310, 0.0001)
+      assert_in_delta(node.width, 85.1839, 0.0001)
+      assert_in_delta(node.height, 8.6479, 0.0001)
     end
 
     test "doesn't measure text elements if the right font files are not given" do

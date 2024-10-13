@@ -428,7 +428,7 @@ pub fn query_all<'a>(env: Env<'a>, in_svg: String, options: Options) -> NifResul
             if node.id().is_empty() {
                 None
             } else {
-                let bbox = node.abs_bounding_box();
+                let bbox = node.abs_stroke_bounding_box();
     
                 let node = Node {
                     id: node.id().to_string(),
@@ -496,6 +496,7 @@ fn parse_options<'a>(in_svg: InputFrom, options: Options) -> Result<ParsedOption
         font_resolver: usvg::FontResolver::default(),
         fontdb: Arc::new(fontdb::Database::new()),
         style_sheet: None
+
     };
 
     let background = match options.background {
@@ -540,7 +541,6 @@ fn load_fonts(font_properties: &FontProperties, fontdb: &mut fontdb::Database)
     }
 
     for path in &font_properties.font_files {
-        // FIXME: Ignore failure to load files, for now
         fontdb
             .load_font_file(path)
             .map_err(|e| format!("Error loading font file: {}", e))?;
