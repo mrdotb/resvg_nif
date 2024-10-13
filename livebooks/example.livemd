@@ -2,8 +2,8 @@
 
 ```elixir
 Mix.install([
-  {:resvg, "~> 0.3"},
-  {:req, "~> 0.3"},
+  {:resvg, "~> 0.4"},
+  {:req, "~> 0.5"},
   {:kino, "~> 0.9"}
 ])
 ```
@@ -60,7 +60,7 @@ roboto_path = "#{path}/roboto.ttf"
 
 font_file =
   H.download_as!(
-    "https://raw.githubusercontent.com/mrdotb/resvg_nif/master/test/support/fonts/Roboto/Roboto-Regular.ttf",
+    "https://raw.githubusercontent.com/mrdotb/resvg_nif/master/test/support/fonts/Roboto-Regular.ttf",
     roboto_path
   )
 

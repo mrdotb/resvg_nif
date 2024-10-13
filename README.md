@@ -19,7 +19,7 @@ by adding `resvg_nif` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:resvg, "~> 0.3.0"}
+    {:resvg, "~> 0.4.0"}
   ]
 end
 ```
