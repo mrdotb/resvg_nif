@@ -11,41 +11,47 @@ on:
       - master
 
 jobs:
-  tests:
+  code_quality_and_tests:
+    runs-on: ubuntu-latest
     env:
       MIX_ENV: test
       RESVG_BUILD: true
-    runs-on: ubuntu-latest
     name: "[${{matrix.otp}}/${{matrix.elixir}}] Tests on resvg_nif [OTP/Elixir]"
     strategy:
       fail-fast: false
       matrix:
-        otp: [26.2, 27]
+        otp: [27]
         elixir: [1.17.3]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+
+      - uses: dtolnay/rust-toolchain@stable
+
       - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{matrix.otp}}
           elixir-version: ${{matrix.elixir}}
+
       - name: Cache hex deps
         id: mix-cache
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: |
             deps
             _build
             !_build/*/lib/resvg
           key: ${{ runner.os }}[${{ matrix.otp }}/${{ matrix.elixir }}]-mix-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
+
       - run: mix deps.get
+
       - run: mix deps.compile
+
+      - run: mix format.check
+
       - run: mix compile --warnings-as-errors
         env:
           RUST_BACKTRACE: 1
-          RESVG_BUILD: 1
+
       - run: mix test
