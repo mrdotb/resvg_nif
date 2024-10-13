@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [0.4.0] – 2024-13-10
+- Upgrade to Resvg 0.44
+- Update dependencies.
+
 ## [0.3.3] – 2024-07-04
 - Update dependencies.
 
