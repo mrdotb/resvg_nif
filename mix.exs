@@ -28,7 +28,7 @@ defmodule Resvg.MixProject do
   defp deps do
     [
       {:rustler_precompiled, "~> 0.8.1"},
-      {:rustler, "~> 0.34.0", optional: true},
+      {:rustler, "~> 0.36.0", optional: true},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:approval, "~> 0.1", only: :test}
     ]
