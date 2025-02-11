@@ -27,8 +27,8 @@ defmodule Resvg.Test do
       assert File.exists?(output)
 
       approve(
-        snapshot: File.read!(output),
-        reference: File.read!(reference),
+        snapshot: output,
+        reference: reference,
         reviewed: true
       )
     end
@@ -49,8 +49,8 @@ defmodule Resvg.Test do
       assert File.exists?(output)
 
       approve(
-        snapshot: File.read!(output),
-        reference: File.read!(reference),
+        snapshot: output,
+        reference: reference,
         reviewed: true
       )
     end
@@ -64,8 +64,8 @@ defmodule Resvg.Test do
       assert File.exists?(output)
 
       approve(
-        snapshot: File.read!(output),
-        reference: File.read!(reference),
+        snapshot: output,
+        reference: reference,
         reviewed: true
       )
     end
@@ -87,8 +87,8 @@ defmodule Resvg.Test do
       assert File.exists?(output)
 
       approve(
-        snapshot: File.read!(output),
-        reference: File.read!(reference),
+        snapshot: output,
+        reference: reference,
         reviewed: true
       )
     end
@@ -109,8 +109,8 @@ defmodule Resvg.Test do
       assert File.exists?(output)
 
       approve(
-        snapshot: File.read!(output),
-        reference: File.read!(reference),
+        snapshot: output,
+        reference: reference,
         reviewed: true
       )
     end
@@ -130,8 +130,8 @@ defmodule Resvg.Test do
       assert :ok = Resvg.svg_string_to_png(svg_string, output, resources_dir: @support_path)
 
       approve(
-        snapshot: File.read!(output),
-        reference: File.read!(reference),
+        snapshot: output,
+        reference: reference,
         reviewed: true
       )
     end
@@ -153,8 +153,8 @@ defmodule Resvg.Test do
       assert File.exists?(output)
 
       approve(
-        snapshot: File.read!(output),
-        reference: File.read!(reference),
+        snapshot: output,
+        reference: reference,
         reviewed: true
       )
     end
@@ -184,8 +184,8 @@ defmodule Resvg.Test do
         )
 
       approve(
-        snapshot: File.read!(output),
-        reference: File.read!(reference),
+        snapshot: output,
+        reference: reference,
         reviewed: true
       )
     end
@@ -209,8 +209,8 @@ defmodule Resvg.Test do
       File.write!(output, image_data)
 
       approve(
-        snapshot: File.read!(output),
-        reference: File.read!(reference),
+        snapshot: output,
+        reference: reference,
         reviewed: true
       )
     end
@@ -229,8 +229,8 @@ defmodule Resvg.Test do
         )
 
       approve(
-        snapshot: File.read!(output),
-        reference: File.read!(reference),
+        snapshot: output,
+        reference: reference,
         reviewed: true
       )
     end
