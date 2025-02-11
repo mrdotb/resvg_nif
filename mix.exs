@@ -2,7 +2,7 @@ defmodule Resvg.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/mrdotb/resvg_nif"
-  @version "0.4.0"
+  @version "0.5.0"
 
   def project do
     [
@@ -30,7 +30,7 @@ defmodule Resvg.MixProject do
       {:rustler_precompiled, "~> 0.8.1"},
       {:rustler, "~> 0.36.0", optional: true},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
-      {:approval, "~> 0.1", only: :test}
+      {:approval, only: :test, github: "mrdotb/approval"}
     ]
   end
 
