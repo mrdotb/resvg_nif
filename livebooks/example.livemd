@@ -2,7 +2,7 @@
 
 ```elixir
 Mix.install([
-  {:resvg, "~> 0.4"},
+  {:resvg, "~> 0.5"},
   {:req, "~> 0.5"},
   {:kino, "~> 0.9"}
 ])
