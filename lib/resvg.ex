@@ -50,6 +50,8 @@ defmodule Resvg do
 
   alias Resvg.Options
 
+  @type png_buffer :: [0..255]
+
   @doc """
   Try to convert the contents of `in_svg` to `out_png`.
 
@@ -130,7 +132,7 @@ defmodule Resvg do
   @spec svg_string_to_png_buffer(
           svg_string :: String.t(),
           options :: Options.resvg_options()
-        ) :: {:ok, binary()} | {:error, String.t()}
+        ) :: {:ok, png_buffer} | {:error, String.t()}
   def svg_string_to_png_buffer(svg_string, opts) do
     options = struct(Options, opts)
     Resvg.Native.svg_string_to_png_buffer(svg_string, options)
