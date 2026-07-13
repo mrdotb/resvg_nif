@@ -35,6 +35,8 @@ defmodule Resvg.Native do
   def svg_string_to_png_buffer(_svg_string, _options), do: error()
   def list_fonts(_options), do: error()
   def query_all(_in_svg, _options), do: error()
+  def init_fontdb(_options), do: error()
+  def svg_string_to_png_binary(_svg_string, _options), do: error()
 
   defp error, do: :erlang.nif_error(:nif_not_loaded)
 end

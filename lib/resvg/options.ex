@@ -32,6 +32,7 @@ defmodule Resvg.Options do
           | {:font_files, [Path.t()]}
           | {:font_dirs, [Path.t()]}
           | {:skip_system_fonts, boolean()}
+          | {:fontdb, reference()}
         ]
 
   defstruct width: nil,
@@ -53,5 +54,6 @@ defmodule Resvg.Options do
             monospace_family: nil,
             font_files: [],
             font_dirs: [],
-            skip_system_fonts: false
+            skip_system_fonts: false,
+            fontdb: nil
 end

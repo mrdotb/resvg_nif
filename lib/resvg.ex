@@ -46,11 +46,17 @@ defmodule Resvg do
     * `:skip_system_fonts` - Disable systems fonts loading. You should add some
     some fonts with `:font_files` or `:font_dirs` otherwise, text elements will
     not be processed.
+    * `:fontdb` - A reusable font database handle from `init_fontdb/1`. When set,
+    the render reuses that database (a cheap `Arc` clone) instead of re-parsing
+    fonts on every call, and the other font-related options above are ignored
+    (the database already carries them). Ideal for high-frequency renderers that
+    repaint many frames with the same fonts.
   """
 
   alias Resvg.Options
 
   @type png_buffer :: [0..255]
+  @type png_binary :: binary()
 
   @doc """
   Try to convert the contents of `in_svg` to `out_png`.
@@ -136,6 +142,42 @@ defmodule Resvg do
   def svg_string_to_png_buffer(svg_string, opts) do
     options = struct(Options, opts)
     Resvg.Native.svg_string_to_png_buffer(svg_string, options)
+  end
+
+  @doc """
+  Builds a reusable font database from the font-related options
+  (`font_files`, `font_dirs`, `*_family`, `skip_system_fonts`).
+
+  Font-database construction is by far the dominant per-render cost, so when you
+  render many images with the same fonts, build the database once here and pass
+  the returned handle through the `:fontdb` option of any render function
+  (`svg_string_to_png/3`, `svg_string_to_png_buffer/2`,
+  `svg_string_to_png_binary/2`, `svg_to_png/3`). Returns `{:ok, fontdb}`.
+
+  ## Examples
+
+      {:ok, db} = Resvg.init_fontdb(font_files: ["/path/DejaVuSans.ttf"], skip_system_fonts: true)
+      :ok = Resvg.svg_string_to_png(svg, "out.png", resources_dir: "/tmp", fontdb: db)
+  """
+  @spec init_fontdb(options :: Options.resvg_options()) ::
+          {:ok, reference()} | {:error, String.t()}
+  def init_fontdb(opts \\ []) do
+    options = struct(Options, opts)
+    Resvg.Native.init_fontdb(options)
+  end
+
+  @doc """
+  Like `svg_string_to_png_buffer/2`, but returns the PNG as a **binary** instead
+  of a per-byte integer list (much faster + lighter for a PNG). Returns
+  `{:ok, binary}`. Pass the `:fontdb` option to reuse a warm font database.
+  """
+  @spec svg_string_to_png_binary(
+          svg_string :: String.t(),
+          options :: Options.resvg_options()
+        ) :: {:ok, png_binary} | {:error, String.t()}
+  def svg_string_to_png_binary(svg_string, opts \\ []) do
+    options = struct(Options, opts)
+    Resvg.Native.svg_string_to_png_binary(svg_string, options)
   end
 
   @doc """

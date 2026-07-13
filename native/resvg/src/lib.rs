@@ -1,9 +1,21 @@
 // Based on https://github.com/RazrFalcon/resvg/blob/master/crates/resvg/src/main.rs
 
-use rustler::{Decoder, Encoder, Env, NifResult, NifStruct, Term};
+use rustler::{Decoder, Encoder, Env, NifResult, NifStruct, OwnedBinary, ResourceArc, Term};
 use std::path;
 use std::sync::Arc;
 use usvg::{fontdb, ImageRendering, ShapeRendering, TextRendering};
+
+// A pre-built, reusable font database. Building a fontdb (parsing every font
+// file / scanning system fonts) is by far the dominant per-render cost, so
+// callers that render many frames with the same fonts can build it once with
+// `init_fontdb/1` and pass the handle through the `:fontdb` render option, which
+// reuses it via a cheap `Arc` clone instead of re-parsing on every call.
+struct FontDbResource(Arc<fontdb::Database>);
+
+fn load(env: Env, _info: Term) -> bool {
+    rustler::resource!(FontDbResource, env);
+    true
+}
 
 mod atoms {
     rustler::atoms! {
@@ -131,6 +143,12 @@ pub struct Options {
     font_files: Vec<String>,
     font_dirs: Vec<String>,
     skip_system_fonts: bool,
+
+    // Optional handle to a reusable font database built by `init_fontdb/1`. When
+    // present, the render skips the per-call font parse and reuses this db (a
+    // cheap `Arc` clone); the other font-related fields are then ignored because
+    // the db already carries them. `nil` (None) preserves the original behavior.
+    fontdb: Option<ResourceArc<FontDbResource>>,
 }
 
 #[derive(NifStruct)]
@@ -159,6 +177,9 @@ struct ParsedOptions<'a> {
     font_files: Vec<path::PathBuf>,
     font_dirs: Vec<path::PathBuf>,
     skip_system_fonts: bool,
+    // True when `usvg.fontdb` was seeded from a reusable db (via the `:fontdb`
+    // option), so the render can skip the per-call `load_fonts`.
+    prebuilt_fontdb: bool,
 }
 
 #[rustler::nif]
@@ -207,7 +228,9 @@ pub fn svg_to_png<'a>(
         .descendants()
         .any(|n| n.has_tag_name(("http://www.w3.org/2000/svg", "text")));
 
-    if has_text_nodes {
+    // Skip the (expensive) font load when a reusable db was supplied via the
+    // `:fontdb` option — it already carries the parsed fonts.
+    if has_text_nodes && !parsed_options.prebuilt_fontdb {
         match load_fonts(&font_properties, parsed_options.usvg.fontdb_mut()) {
             Ok(_) => (),
             Err(error) => return Ok((atoms::error(), error).encode(env)),
@@ -254,7 +277,9 @@ pub fn svg_string_to_png<'a>(
         .descendants()
         .any(|n| n.has_tag_name(("http://www.w3.org/2000/svg", "text")));
 
-    if has_text_nodes {
+    // Skip the (expensive) font load when a reusable db was supplied via the
+    // `:fontdb` option — it already carries the parsed fonts.
+    if has_text_nodes && !parsed_options.prebuilt_fontdb {
         match load_fonts(&font_properties, parsed_options.usvg.fontdb_mut()) {
             Ok(_) => (),
             Err(error) => return Ok((atoms::error(), error).encode(env)),
@@ -300,7 +325,9 @@ pub fn svg_string_to_png_buffer<'a>(
         .descendants()
         .any(|n| n.has_tag_name(("http://www.w3.org/2000/svg", "text")));
 
-    if has_text_nodes {
+    // Skip the (expensive) font load when a reusable db was supplied via the
+    // `:fontdb` option — it already carries the parsed fonts.
+    if has_text_nodes && !parsed_options.prebuilt_fontdb {
         match load_fonts(&font_properties, parsed_options.usvg.fontdb_mut()) {
             Ok(_) => (),
             Err(error) => return Ok((atoms::error(), error).encode(env)),
@@ -317,6 +344,56 @@ pub fn svg_string_to_png_buffer<'a>(
     match img.encode_png().map_err(|e| e.to_string()) {
         Ok(buf) => Ok((atoms::ok(), buf).encode(env)),
         Err(error_msg) => return Ok((atoms::error(), error_msg).encode(env)),
+    }
+}
+
+/// Like `svg_string_to_png_buffer/2`, but returns the PNG as an Elixir **binary**
+/// instead of a `Vec<u8>` (which rustler encodes as a per-byte integer list —
+/// slow and heap-heavy for a PNG). Non-breaking: `svg_string_to_png_buffer/2`
+/// still returns the list.
+#[rustler::nif]
+pub fn svg_string_to_png_binary<'a>(
+    env: Env<'a>,
+    svg_string: String,
+    options: Options,
+) -> NifResult<Term<'a>> {
+    let mut parsed_options =
+        try_or_return_elixir_err!(parse_options(InputFrom::Text, options), env);
+    let font_properties = FontProperties::from_parsed_options(&parsed_options);
+
+    let xml_opt = usvg::roxmltree::ParsingOptions {
+        allow_dtd: true,
+        ..Default::default()
+    };
+    let xml_tree = try_or_return_elixir_err!(
+        usvg::roxmltree::Document::parse_with_options(&svg_string, xml_opt)
+            .map_err(|e| e.to_string()),
+        env
+    );
+
+    let has_text_nodes = xml_tree
+        .descendants()
+        .any(|n| n.has_tag_name(("http://www.w3.org/2000/svg", "text")));
+
+    // Skip the (expensive) font load when a reusable db was supplied via the
+    // `:fontdb` option — it already carries the parsed fonts.
+    if has_text_nodes && !parsed_options.prebuilt_fontdb {
+        match load_fonts(&font_properties, parsed_options.usvg.fontdb_mut()) {
+            Ok(_) => (),
+            Err(error) => return Ok((atoms::error(), error).encode(env)),
+        };
+    }
+
+    let tree = try_or_return_elixir_err!(
+        usvg::Tree::from_xmltree(&xml_tree, &parsed_options.usvg).map_err(|e| e.to_string()),
+        env
+    );
+
+    let img = try_or_return_elixir_err!(render_svg(&parsed_options, &tree), env);
+
+    match img.encode_png().map_err(|e| e.to_string()) {
+        Ok(buf) => Ok(ok_png_binary(env, buf)),
+        Err(error_msg) => Ok((atoms::error(), error_msg).encode(env)),
     }
 }
 
@@ -404,7 +481,9 @@ pub fn query_all<'a>(env: Env<'a>, in_svg: String, options: Options) -> NifResul
         .descendants()
         .any(|n| n.has_tag_name(("http://www.w3.org/2000/svg", "text")));
 
-    if has_text_nodes {
+    // Skip the (expensive) font load when a reusable db was supplied via the
+    // `:fontdb` option — it already carries the parsed fonts.
+    if has_text_nodes && !parsed_options.prebuilt_fontdb {
         match load_fonts(&font_properties, parsed_options.usvg.fontdb_mut()) {
             Ok(_) => (),
             Err(error) => return Ok((atoms::error(), error).encode(env)),
@@ -478,6 +557,13 @@ fn parse_options<'a>(in_svg: InputFrom, options: Options) -> Result<ParsedOption
         },
     };
 
+    // Reuse a pre-built font database when one was passed via the `:fontdb`
+    // option, otherwise start from an empty db that `load_fonts` will populate.
+    let (fontdb_arc, prebuilt_fontdb) = match options.fontdb {
+        Some(ref resource) => (resource.0.clone(), true),
+        None => (Arc::new(fontdb::Database::new()), false),
+    };
+
     let usvg_options = usvg::Options {
         resources_dir,
         dpi: options.dpi as f32,
@@ -494,7 +580,7 @@ fn parse_options<'a>(in_svg: InputFrom, options: Options) -> Result<ParsedOption
         default_size: default_size,
         image_href_resolver: usvg::ImageHrefResolver::default(),
         font_resolver: usvg::FontResolver::default(),
-        fontdb: Arc::new(fontdb::Database::new()),
+        fontdb: fontdb_arc,
         style_sheet: None,
     };
 
@@ -530,6 +616,7 @@ fn parse_options<'a>(in_svg: InputFrom, options: Options) -> Result<ParsedOption
         font_files,
         font_dirs,
         skip_system_fonts: options.skip_system_fonts,
+        prebuilt_fontdb,
     })
 }
 
@@ -711,13 +798,57 @@ fn svg_to_skia_color(color: svgtypes::Color) -> tiny_skia::Color {
     tiny_skia::Color::from_rgba8(color.red, color.green, color.blue, color.alpha)
 }
 
+// Encode PNG bytes as an Elixir binary rather than the default `Vec<u8>` term
+// encoding, which materializes one integer term per byte (very slow + heavy for
+// a ~20KB PNG). Returns `{:ok, <<binary>>}`.
+fn ok_png_binary<'a>(env: Env<'a>, buf: Vec<u8>) -> Term<'a> {
+    let mut bin = OwnedBinary::new(buf.len()).expect("failed to allocate PNG binary");
+    bin.as_mut_slice().copy_from_slice(&buf);
+    (atoms::ok(), bin.release(env)).encode(env)
+}
+
+// Build a FontProperties straight from the decoded Options, without going
+// through parse_options (which requires resources_dir for string input and is
+// render-oriented). Used to prime a reusable font database.
+fn font_properties_from_options(options: &Options) -> FontProperties {
+    FontProperties {
+        font_files: options.font_files.iter().map(path::PathBuf::from).collect(),
+        font_dirs: options.font_dirs.iter().map(path::PathBuf::from).collect(),
+        serif_family: options.serif_family.clone(),
+        sans_serif_family: options.sans_serif_family.clone(),
+        cursive_family: options.cursive_family.clone(),
+        fantasy_family: options.fantasy_family.clone(),
+        monospace_family: options.monospace_family.clone(),
+        skip_system_fonts: options.skip_system_fonts,
+    }
+}
+
+/// Build a reusable font database once, honoring the font-related fields of
+/// `options` (`font_files`, `font_dirs`, `*_family`, `skip_system_fonts`).
+/// Returns `{:ok, resource}`; pass the resource back through the `:fontdb`
+/// option of any render function to reuse it instead of re-parsing fonts.
+#[rustler::nif]
+pub fn init_fontdb<'a>(env: Env<'a>, options: Options) -> NifResult<Term<'a>> {
+    let font_properties = font_properties_from_options(&options);
+    let mut db = fontdb::Database::new();
+    match load_fonts(&font_properties, &mut db) {
+        Ok(_) => (),
+        Err(error) => return Ok((atoms::error(), error).encode(env)),
+    };
+    let resource = ResourceArc::new(FontDbResource(Arc::new(db)));
+    Ok((atoms::ok(), resource).encode(env))
+}
+
 rustler::init!(
     "Elixir.Resvg.Native",
     [
         svg_to_png,
         svg_string_to_png,
         svg_string_to_png_buffer,
+        svg_string_to_png_binary,
         list_fonts,
-        query_all
-    ]
+        query_all,
+        init_fontdb
+    ],
+    load = load
 );

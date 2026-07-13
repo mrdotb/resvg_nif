@@ -236,6 +236,65 @@ defmodule Resvg.Test do
     end
   end
 
+  describe "warm font database via :fontdb option" do
+    test "init_fontdb/1 returns a reusable handle" do
+      assert {:ok, db} =
+               Resvg.init_fontdb(font_dirs: [font_dir()], skip_system_fonts: true)
+
+      assert is_reference(db)
+    end
+
+    test "svg_string_to_png/3 reusing a warm db matches the per-call render" do
+      input = image_path("text-font-change.svg")
+      output = image_path("snapshots/text-font-change_svg_string_to_png_with_db.png")
+      reference = image_path("text-font-change-reference.png")
+
+      svg_string = File.read!(input)
+
+      {:ok, db} = Resvg.init_fontdb(font_dirs: [font_dir()], skip_system_fonts: true)
+
+      # No font_dirs/skip_system_fonts here — the warm db already carries them.
+      :ok =
+        Resvg.svg_string_to_png(svg_string, output,
+          dpi: 256,
+          resources_dir: @tmp,
+          fontdb: db
+        )
+
+      approve(
+        snapshot: output,
+        reference: reference,
+        reviewed: true
+      )
+    end
+
+    test "svg_string_to_png_binary/2 reusing a warm db returns a matching binary" do
+      input = image_path("text-font-change.svg")
+      output = image_path("snapshots/text-font-change_svg_string_to_png_binary_with_db.png")
+      reference = image_path("text-font-change-reference.png")
+
+      svg_string = File.read!(input)
+
+      {:ok, db} = Resvg.init_fontdb(font_dirs: [font_dir()], skip_system_fonts: true)
+
+      {:ok, binary} =
+        Resvg.svg_string_to_png_binary(svg_string,
+          dpi: 256,
+          resources_dir: @tmp,
+          fontdb: db
+        )
+
+      assert is_binary(binary)
+      File.write!(output, binary)
+
+      approve(
+        snapshot: output,
+        reference: reference,
+        reviewed: true
+      )
+    end
+  end
+
   describe "list_fonts/1" do
     test "return fonts list" do
       {:ok, fonts} = Resvg.list_fonts(resources_dir: @tmp)
@@ -305,10 +364,14 @@ defmodule Resvg.Test do
       assert_in_delta(node.height, 8.6479, 0.0001)
     end
 
-    test "doesn't measure text elements if the right font files are not given" do
+    test "doesn't measure text elements if no fonts are available" do
       input = image_path("text-measurement.svg")
 
-      assert Resvg.query_all(input, font_files: []) == []
+      # With no font files and system fonts skipped, the db is empty, so usvg
+      # cannot shape/measure the text. (usvg 0.47 falls back to an available
+      # system font when one exists, so system fonts must be disabled here to
+      # keep this deterministic.)
+      assert Resvg.query_all(input, font_files: [], skip_system_fonts: true) == []
     end
   end
 end
